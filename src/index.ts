@@ -87,3 +87,30 @@ export interface TerminalPluginPublicStatus {
   fidelity: TerminalRecoveryFidelity;
   failure: TerminalPluginFailure | null;
 }
+
+export interface TerminalPluginManifestCommand {
+  name: string;
+  danger?: string;
+}
+
+export function validateTerminalPluginManifestCommands(
+  commands: readonly TerminalPluginManifestCommand[],
+): string[] {
+  const errors: string[] = [];
+  const index = new Map<string, TerminalPluginManifestCommand>();
+  for (const command of commands) {
+    if (index.has(command.name)) errors.push(`duplicate terminal command: ${command.name}`);
+    index.set(command.name, command);
+  }
+  for (const name of TERMINAL_PLUGIN_COMMANDS) {
+    const command = index.get(name);
+    if (!command) {
+      errors.push(`missing terminal command: ${name}`);
+      continue;
+    }
+    const expected = TERMINAL_PLUGIN_COMMAND_SCHEMAS[name].danger;
+    const actual = command.danger ?? "none";
+    if (actual !== expected) errors.push(`terminal command ${name} danger is ${actual}, expected ${expected}`);
+  }
+  return errors;
+}

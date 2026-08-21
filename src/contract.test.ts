@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
   TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS,
+  validateTerminalPluginManifestCommands,
 } from "./index";
 
 describe("terminal plugin contract 0.0.1", () => {
@@ -36,5 +37,16 @@ describe("terminal plugin contract 0.0.1", () => {
       expect(schema.input.additionalProperties).toBe(false);
       expect(schema.output.additionalProperties).toBe(false);
     }
+  });
+  it("validates a plugin's own command declaration", () => {
+    const commands = TERMINAL_PLUGIN_COMMANDS.map((name) => ({
+      name,
+      ...(TERMINAL_PLUGIN_COMMAND_SCHEMAS[name].danger === "inject" ? { danger: "inject" } : {}),
+    }));
+    expect(validateTerminalPluginManifestCommands(commands)).toEqual([]);
+    expect(validateTerminalPluginManifestCommands(commands.filter((value) => value.name !== "archive")))
+      .toContain("missing terminal command: archive");
+    expect(validateTerminalPluginManifestCommands(commands.map((value) => value.name === "send" ? { name: "send" } : value)))
+      .toContain("terminal command send danger is none, expected inject");
   });
 });
