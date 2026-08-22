@@ -1,7 +1,8 @@
 {
   "name": "@soksak/soksak-contract-plugin-terminal",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
+  "pnpm": { "onlyBuiltDependencies": ["esbuild"] },
   "license": "MIT",
   "repository": {
     "type": "git",
