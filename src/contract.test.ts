@@ -33,7 +33,7 @@ describe("terminal plugin contract 0.0.3", () => {
       output: { required: ["phase", "recoveryOutcome", "fidelity"] },
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.required).toEqual(expect.arrayContaining([
-      "hostPixels", "requested", "pty", "recovery", "rendered",
+      "hostPixels", "requested", "pty", "recovery", "rendered", "operation",
     ]));
 	 expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
 	   "cols", "colsLessThan", "contains", "phase", "rows", "timeoutMs", "view",

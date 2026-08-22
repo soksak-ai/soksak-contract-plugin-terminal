@@ -40,10 +40,10 @@ const statusOutput = output({
   phase: "string", pluginId: "string", engineId: "string", rendererId: "string",
   rendererProfile: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
   hostPixels: "object", requested: ["object", "null"], pty: ["object", "null"],
-  recovery: ["object", "null"], rendered: ["object", "null"],
+  recovery: ["object", "null"], rendered: ["object", "null"], operation: "string",
 }, [
   "phase", "pluginId", "engineId", "rendererId", "rendererProfile", "recoveryOutcome",
-  "fidelity", "failure", "hostPixels", "requested", "pty", "recovery", "rendered",
+  "fidelity", "failure", "hostPixels", "requested", "pty", "recovery", "rendered", "operation",
 ]);
 const viewInput = () => input({ view: "string" });
 
@@ -91,6 +91,7 @@ export interface TerminalResizeStatus {
   pty: TerminalSequencedSize | null;
   recovery: TerminalSequencedSize | null;
   rendered: TerminalSize | null;
+  operation: string;
 }
 export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   phase: TerminalPluginPhase;
