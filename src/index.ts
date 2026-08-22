@@ -1,6 +1,6 @@
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.2",
+  version: "0.0.3",
 } as const);
 
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
@@ -39,7 +39,12 @@ const output = (properties: Record<string, FieldType>, required: string[]): Term
 const statusOutput = output({
   phase: "string", pluginId: "string", engineId: "string", rendererId: "string",
   rendererProfile: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
-}, ["phase", "pluginId", "engineId", "rendererId", "rendererProfile", "recoveryOutcome", "fidelity", "failure"]);
+  hostPixels: "object", requested: ["object", "null"], pty: ["object", "null"],
+  recovery: ["object", "null"], rendered: ["object", "null"],
+}, [
+  "phase", "pluginId", "engineId", "rendererId", "rendererProfile", "recoveryOutcome",
+  "fidelity", "failure", "hostPixels", "requested", "pty", "recovery", "rendered",
+]);
 const viewInput = () => input({ view: "string" });
 
 export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
@@ -77,7 +82,17 @@ export const TERMINAL_PLUGIN_NODES = Object.freeze([
 ] as const);
 
 export interface TerminalPluginFailure { code: string; message: string }
-export interface TerminalPluginPublicStatus {
+export interface TerminalSize { cols: number; rows: number }
+export interface TerminalSequencedSize extends TerminalSize { eventSequence: number }
+export interface TerminalHostPixels { width: number; height: number }
+export interface TerminalResizeStatus {
+  hostPixels: TerminalHostPixels;
+  requested: TerminalSize | null;
+  pty: TerminalSequencedSize | null;
+  recovery: TerminalSequencedSize | null;
+  rendered: TerminalSize | null;
+}
+export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   phase: TerminalPluginPhase;
   pluginId: string;
   engineId: string;
