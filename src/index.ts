@@ -1,6 +1,6 @@
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.3",
+  version: "0.0.4",
 } as const);
 
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
@@ -84,13 +84,16 @@ export const TERMINAL_PLUGIN_NODES = Object.freeze([
 export interface TerminalPluginFailure { code: string; message: string }
 export interface TerminalSize { cols: number; rows: number }
 export interface TerminalSequencedSize extends TerminalSize { eventSequence: number }
+export interface TerminalSourceObservation extends TerminalSequencedSize { outputSequence: number }
+export interface TerminalRecoveryObservation extends TerminalSourceObservation { gaps: number }
+export interface TerminalRenderedObservation extends TerminalSize { outputSequence: number }
 export interface TerminalHostPixels { width: number; height: number }
 export interface TerminalResizeStatus {
   hostPixels: TerminalHostPixels;
   requested: TerminalSize | null;
-  pty: TerminalSequencedSize | null;
-  recovery: TerminalSequencedSize | null;
-  rendered: TerminalSize | null;
+  pty: TerminalSourceObservation | null;
+  recovery: TerminalRecoveryObservation | null;
+  rendered: TerminalRenderedObservation | null;
   operation: string;
 }
 export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
