@@ -14,7 +14,7 @@ test("repository owns public metadata", () => {
     "git+https://github.com/soksak-ai/soksak-contract-plugin-terminal.git",
   );
   const contract = JSON.parse(readFileSync(join(root, "contract.json"), "utf8"));
-  assert.deepEqual(contract, { id: "soksak-contract-plugin-terminal", version: "0.0.5" });
+  assert.deepEqual(contract, { id: "soksak-contract-plugin-terminal", version: "0.0.6" });
   assert.equal(pkg.version, contract.version);
   assert.deepEqual(JSON.parse(readFileSync(join(root, "release-files.json"), "utf8")), [
     "LICENSE", "README.md", "SPEC.ko.md", "SPEC.md", "contract.json", "package.json", "pnpm-lock.yaml",

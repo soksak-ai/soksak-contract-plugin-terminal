@@ -1,6 +1,6 @@
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.4",
+  version: "0.0.5",
 } as const);
 
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
@@ -51,7 +51,7 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
   status: { danger: "none", input: viewInput(), output: statusOutput },
   wait: {
     danger: "none",
-    input: input({ view: "string", phase: "string", timeoutMs: "number", contains: "string", cols: "number", colsLessThan: "number", rows: "number" }, ["phase"]),
+    input: input({ view: "string", phase: "string", timeoutMs: "number", contains: "string", cols: "number", colsLessThan: "number", colsGreaterThan: "number", rows: "number" }, ["phase"]),
     output: output({
       phase: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
       cols: "number", rows: "number", operation: "string",

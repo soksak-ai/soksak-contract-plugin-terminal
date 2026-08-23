@@ -5,10 +5,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.4", () => {
+describe("terminal plugin contract 0.0.5", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.4",
+      id: "soksak-spec-plugin-terminal", version: "0.0.5",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -36,7 +36,7 @@ describe("terminal plugin contract 0.0.4", () => {
       "hostPixels", "requested", "pty", "recovery", "rendered", "operation",
     ]));
 	 expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
-	   "cols", "colsLessThan", "contains", "phase", "rows", "timeoutMs", "view",
+	   "cols", "colsGreaterThan", "colsLessThan", "contains", "phase", "rows", "timeoutMs", "view",
 	 ]);
     for (const command of TERMINAL_PLUGIN_COMMANDS) {
       const schema = TERMINAL_PLUGIN_COMMAND_SCHEMAS[command];

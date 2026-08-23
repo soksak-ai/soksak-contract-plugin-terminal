@@ -1,7 +1,7 @@
 # soksak-contract-plugin-terminal
 
 Shared behavior contract for terminal plugins implementing
-`soksak-spec-plugin-terminal` 0.0.4.
+`soksak-spec-plugin-terminal` 0.0.5.
 
 This repository owns the common lifecycle phases, command schemas, public status fields and exposed
 node identifiers. It does not own plugin manifests, terminal rendering, provider selection or PTY
