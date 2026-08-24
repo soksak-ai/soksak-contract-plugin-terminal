@@ -79,11 +79,15 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
   status: { danger: "none", input: viewInput(), output: statusOutput },
   wait: {
     danger: "none",
-    input: input({ view: "string", phase: "string", timeoutMs: "number", contains: "string", cols: "number", colsLessThan: "number", colsGreaterThan: "number", rows: "number" }, ["phase"]),
+    input: input({
+      view: "string", phase: "string", timeoutMs: "number", contains: "string",
+      cols: "number", colsLessThan: "number", colsGreaterThan: "number", rows: "number",
+      focusedInput: "boolean", cursorVisible: "boolean", cursorActive: "boolean",
+    }, ["phase"]),
     output: output({
       phase: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
-      cols: "number", rows: "number", operation: "string",
-    }, ["phase", "recoveryOutcome", "fidelity"]),
+      cols: "number", rows: "number", operation: "string", presentation: "object",
+    }, ["phase", "recoveryOutcome", "fidelity", "presentation"]),
   },
   archive: {
     danger: "none", input: viewInput(),
