@@ -34,3 +34,9 @@ test("repository owns public metadata", () => {
   assert.match(workflow, /package_json_file: component\/package\.json/);
   assert.match(workflow, /immutable-releases.*enforced_by_owner/);
 });
+
+test("preflight judges the effective repository-selected pnpm", () => {
+  const source = readFileSync(join(root, "scripts/check-build-environment.sh"), "utf8");
+  assert.match(source, /pnpm_actual=.*pnpm --version/);
+  assert.doesNotMatch(source, /pnpm_executable|pnpmExecutable/);
+});
