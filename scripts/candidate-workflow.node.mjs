@@ -8,13 +8,12 @@ const root = path.resolve(import.meta.dirname, "..");
 test("contract owner builds a sealed candidate from the exact spec artifact", () => {
   const workflow = fs.readFileSync(path.join(root, ".github/workflows/candidate.yml"), "utf8");
   for (const required of [
-    "workflow_call:",
+    "workflow_call:", "source_repository:",
     "source_ref:",
     "spec_artifact_name:",
     "spec_artifact_digest:",
     "spec_candidate_manifest_sha256:",
     "spec_source_commit:",
-    "github.workflow_ref",
     "git -C source rev-parse HEAD",
     "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
     "verify-candidate-artifact.mjs",
@@ -33,5 +32,6 @@ test("contract owner builds a sealed candidate from the exact spec artifact", ()
     "publish-canonical-release",
     "gh release",
     "gh api",
+    "github.workflow_ref",
   ]) assert.doesNotMatch(workflow, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
