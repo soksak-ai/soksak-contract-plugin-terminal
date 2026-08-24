@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
   TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS,
+  TERMINAL_ANSI_PALETTE,
   validateTerminalPluginManifestCommands,
 } from "./index";
 
@@ -33,7 +34,7 @@ describe("terminal plugin contract 0.0.5", () => {
       output: { required: ["phase", "recoveryOutcome", "fidelity"] },
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.required).toEqual(expect.arrayContaining([
-      "hostPixels", "requested", "pty", "recovery", "rendered", "operation",
+      "hostPixels", "requested", "pty", "recovery", "rendered", "operation", "presentation",
     ]));
 	 expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
 	   "cols", "colsGreaterThan", "colsLessThan", "contains", "phase", "rows", "timeoutMs", "view",
@@ -43,6 +44,20 @@ describe("terminal plugin contract 0.0.5", () => {
       expect(schema.input.additionalProperties).toBe(false);
       expect(schema.output.additionalProperties).toBe(false);
     }
+  });
+
+  it("defines the canonical ANSI palette shared by every renderer", () => {
+    expect(TERMINAL_ANSI_PALETTE).toHaveLength(256);
+    expect(TERMINAL_ANSI_PALETTE.slice(0, 16)).toEqual([
+      "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
+      "#3465a4", "#75507b", "#06989a", "#d3d7cf",
+      "#555753", "#ef2929", "#8ae234", "#fce94f",
+      "#729fcf", "#ad7fa8", "#34e2e2", "#eeeeec",
+    ]);
+    expect(TERMINAL_ANSI_PALETTE[16]).toBe("#000000");
+    expect(TERMINAL_ANSI_PALETTE[231]).toBe("#ffffff");
+    expect(TERMINAL_ANSI_PALETTE[232]).toBe("#080808");
+    expect(TERMINAL_ANSI_PALETTE[255]).toBe("#eeeeee");
   });
   it("validates a plugin's own command declaration", () => {
     const commands = TERMINAL_PLUGIN_COMMANDS.map((name) => ({
