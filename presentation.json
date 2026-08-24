@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "ansi": {
     "base": [
       "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
@@ -13,5 +13,19 @@
   "budgets": {
     "renderMs": 16.666666666666668,
     "inputToPtyWriteMs": 50
+  },
+  "theme": {
+    "tokens": {
+      "foreground": "--fg",
+      "background": "--card",
+      "cursor": "--acc",
+      "cursorAccent": "--card",
+      "selectionBackground": "--fg3"
+    },
+    "properties": {
+      "cursor": "--soksak-terminal-cursor",
+      "cursorAccent": "--soksak-terminal-cursor-accent",
+      "selectionBackground": "--soksak-terminal-selection-background"
+    }
   }
 }

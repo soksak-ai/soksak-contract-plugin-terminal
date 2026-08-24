@@ -2,7 +2,7 @@ import presentation from "../presentation.json" with { type: "json" };
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.6",
+  version: "0.0.7",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -24,6 +24,10 @@ export const TERMINAL_ANSI_PALETTE = Object.freeze(indexedAnsiPalette);
 // One complete 60 Hz display interval, plus three intervals for input to enter the local PTY
 // boundary. The portable data artifact is the owner; TypeScript consumers read the same values.
 export const TERMINAL_PRESENTATION_BUDGETS = Object.freeze({ ...presentation.budgets });
+export const TERMINAL_THEME_CONTRACT = Object.freeze({
+  tokens: Object.freeze({ ...presentation.theme.tokens }),
+  properties: Object.freeze({ ...presentation.theme.properties }),
+});
 
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
   "initializing", "preparing-recovery", "applying-snapshot", "attaching-live-stream",
@@ -143,6 +147,14 @@ export interface TerminalPresentationStatus {
   lastRenderDurationMs: number | null;
   maxRenderDurationMs: number | null;
   lastInputToPtyWriteMs: number | null;
+  theme: TerminalPresentationTheme;
+}
+export interface TerminalPresentationTheme {
+  foreground: string;
+  background: string;
+  cursor: string;
+  cursorAccent: string;
+  selectionBackground: string;
 }
 export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   phase: TerminalPluginPhase;
