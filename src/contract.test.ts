@@ -67,11 +67,11 @@ describe("terminal plugin contract 0.0.6", () => {
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.required).toContain("presentation");
     const status: import("./index").TerminalPresentationStatus = {
-      delivery: "frame", mountSequence: 1, readySequence: 1, renderSequence: 1,
+      delivery: "frame", mountSequence: 1, readySequence: 1, renderSequence: 1, focusSequence: 1,
       acceptedInputSequence: 1, ptyWriteSequence: 1, focusedInput: true,
       cursorVisible: true, cursorActive: true, cursorRow: 0, cursorColumn: 0,
       mountedAtUnixMs: 1, firstVisibleFrameAtUnixMs: 2, firstFocusableInputAtUnixMs: 2,
-      lastRenderedAtUnixMs: 3, lastInputAtUnixMs: 4, lastPtyWriteAtUnixMs: 5,
+      lastRenderedAtUnixMs: 3, lastFocusedAtUnixMs: 3, lastInputAtUnixMs: 4, lastPtyWriteAtUnixMs: 5,
       lastRenderDurationMs: 1, maxRenderDurationMs: 1, lastInputToPtyWriteMs: 1,
     };
     expect(status.lastRenderDurationMs).toBe(1);

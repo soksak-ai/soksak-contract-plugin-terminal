@@ -125,6 +125,7 @@ export interface TerminalPresentationStatus {
   mountSequence: number;
   readySequence: number | null;
   renderSequence: number;
+  focusSequence: number;
   acceptedInputSequence: number;
   ptyWriteSequence: number;
   focusedInput: boolean;
@@ -136,6 +137,7 @@ export interface TerminalPresentationStatus {
   firstVisibleFrameAtUnixMs: number | null;
   firstFocusableInputAtUnixMs: number | null;
   lastRenderedAtUnixMs: number | null;
+  lastFocusedAtUnixMs: number | null;
   lastInputAtUnixMs: number | null;
   lastPtyWriteAtUnixMs: number | null;
   lastRenderDurationMs: number | null;
