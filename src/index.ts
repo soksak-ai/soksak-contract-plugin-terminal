@@ -1,36 +1,29 @@
+import presentation from "../presentation.json" with { type: "json" };
+
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
   version: "0.0.6",
 } as const);
 
-const baseAnsiPalette = [
-  "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
-  "#3465a4", "#75507b", "#06989a", "#d3d7cf",
-  "#555753", "#ef2929", "#8ae234", "#fce94f",
-  "#729fcf", "#ad7fa8", "#34e2e2", "#eeeeec",
-];
+const baseAnsiPalette = presentation.ansi.base;
 const hex = (value: number) => value.toString(16).padStart(2, "0");
 const indexedAnsiPalette = [...baseAnsiPalette];
-const cube = [0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff];
+const cube = presentation.ansi.cube;
 for (let index = 0; index < 216; index += 1) {
   const red = cube[Math.floor(index / 36) % 6];
   const green = cube[Math.floor(index / 6) % 6];
   const blue = cube[index % 6];
   indexedAnsiPalette.push(`#${hex(red)}${hex(green)}${hex(blue)}`);
 }
-for (let index = 0; index < 24; index += 1) {
-  const channel = hex(8 + index * 10);
+for (let index = 0; index < presentation.ansi.grayscale.count; index += 1) {
+  const channel = hex(presentation.ansi.grayscale.start + index * presentation.ansi.grayscale.step);
   indexedAnsiPalette.push(`#${channel}${channel}${channel}`);
 }
 export const TERMINAL_ANSI_PALETTE = Object.freeze(indexedAnsiPalette);
 
-export const TERMINAL_PRESENTATION_BUDGETS = Object.freeze({
-  // One complete 60 Hz display interval. The budget comes from the presentation target,
-  // not from the fastest provider in a comparison run.
-  renderMs: 1000 / 60,
-  // Input must enter the local PTY write boundary before three 60 Hz intervals elapse.
-  inputToPtyWriteMs: 50,
-} as const);
+// One complete 60 Hz display interval, plus three intervals for input to enter the local PTY
+// boundary. The portable data artifact is the owner; TypeScript consumers read the same values.
+export const TERMINAL_PRESENTATION_BUDGETS = Object.freeze({ ...presentation.budgets });
 
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
   "initializing", "preparing-recovery", "applying-snapshot", "attaching-live-stream",

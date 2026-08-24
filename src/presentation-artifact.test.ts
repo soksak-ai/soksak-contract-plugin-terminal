@@ -1,11 +1,10 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import artifact from "../presentation.json" with { type: "json" };
 import { TERMINAL_ANSI_PALETTE, TERMINAL_PRESENTATION_BUDGETS } from "./index";
 
 describe("portable terminal presentation contract", () => {
   it("publishes the palette construction and latency budgets as data", () => {
-    const artifact = JSON.parse(readFileSync(new URL("../presentation.json", import.meta.url), "utf8"));
     expect(artifact).toEqual({
       version: 1,
       ansi: {
