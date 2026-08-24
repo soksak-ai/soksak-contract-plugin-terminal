@@ -8,6 +8,9 @@ const root = join(import.meta.dirname, "..");
 test("repository owns public metadata", () => {
   assert.equal(existsSync(join(root, "README.md")), true);
   assert.equal(existsSync(join(root, "LICENSE")), true);
+  assert.equal(existsSync(join(root, "Makefile")), true);
+  assert.equal(existsSync(join(root, ".node-version")), true);
+  assert.equal(existsSync(join(root, "soksak-spec.ref")), false);
   const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   assert.equal(
     pkg.repository.url,
@@ -23,12 +26,11 @@ test("repository owns public metadata", () => {
   const workflow = readFileSync(join(root, ".github/workflows/release.yml"), "utf8");
   assert.match(pkg.engines.node, /^\d+\.\d+\.\d+$/);
   assert.match(pkg.packageManager, /^pnpm@\d+\.\d+\.\d+$/);
-  assert.equal(
-    readFileSync(join(root, "soksak-spec.ref"), "utf8").trim(),
-    "1960ac7cca8dc52d413a7a4452e8e983710c91da",
-  );
-  assert.match(workflow, /ref: \$\{\{ steps\.spec-ref\.outputs\.commit \}\}/);
-  assert.match(workflow, /node-version-file: component\/package\.json/);
+  assert.equal(readFileSync(join(root, ".node-version"), "utf8").trim(), pkg.engines.node);
+  assert.doesNotMatch(workflow, /repository: soksak-ai\/soksak-spec/);
+  assert.match(workflow, /inputs\.spec_url|inputs\.spec_sha256/);
+  assert.match(workflow, /make verify/);
+  assert.match(workflow, /node-version-file: component\/[.]node-version/);
   assert.match(workflow, /package_json_file: component\/package\.json/);
   assert.match(workflow, /owner-enforced immutable releases must be enabled/);
 });
