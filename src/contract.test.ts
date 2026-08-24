@@ -74,6 +74,7 @@ describe("terminal plugin contract 0.0.7", () => {
         cursor: "--soksak-terminal-cursor",
         cursorAccent: "--soksak-terminal-cursor-accent",
         selectionBackground: "--soksak-terminal-selection-background",
+        ansiPrefix: "--soksak-terminal-ansi-",
       },
     });
   });
