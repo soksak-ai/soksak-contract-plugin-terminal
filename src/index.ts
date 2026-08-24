@@ -24,6 +24,14 @@ for (let index = 0; index < 24; index += 1) {
 }
 export const TERMINAL_ANSI_PALETTE = Object.freeze(indexedAnsiPalette);
 
+export const TERMINAL_PRESENTATION_BUDGETS = Object.freeze({
+  // One complete 60 Hz display interval. The budget comes from the presentation target,
+  // not from the fastest provider in a comparison run.
+  renderMs: 1000 / 60,
+  // Input must enter the local PTY write boundary before three 60 Hz intervals elapse.
+  inputToPtyWriteMs: 50,
+} as const);
+
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
   "initializing", "preparing-recovery", "applying-snapshot", "attaching-live-stream",
   "live", "archived", "degraded-tail", "blocked", "closed",
@@ -137,6 +145,9 @@ export interface TerminalPresentationStatus {
   lastRenderedAtUnixMs: number | null;
   lastInputAtUnixMs: number | null;
   lastPtyWriteAtUnixMs: number | null;
+  lastRenderDurationMs: number | null;
+  maxRenderDurationMs: number | null;
+  lastInputToPtyWriteMs: number | null;
 }
 export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   phase: TerminalPluginPhase;
