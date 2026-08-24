@@ -21,6 +21,9 @@ terminal foreground, background, cursor, cursor-accent, and selection roles. Eve
 publishes the resolved five-role theme in `presentation.theme`. Its `terminal-screen` node exposes
 the computed foreground/background plus the three declared terminal custom properties, so an
 installed-product test can compare actual DOM styling without reading a renderer's private DOM.
+The same node exposes all 256 indexed colours as `${ansiPrefix}<index>` properties. Captures remain
+visual-review evidence; automated colour parity reads this public computed-style surface instead of
+treating screenshot pixels as a pass/fail oracle.
 
 The four public DOM nodes remain `terminal-root`, `terminal-screen`, `terminal-input`, and
 `terminal-restore-status`. A consumer addresses those declared nodes and commands; it does not read a

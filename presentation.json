@@ -25,7 +25,8 @@
     "properties": {
       "cursor": "--soksak-terminal-cursor",
       "cursorAccent": "--soksak-terminal-cursor-accent",
-      "selectionBackground": "--soksak-terminal-selection-background"
+      "selectionBackground": "--soksak-terminal-selection-background",
+      "ansiPrefix": "--soksak-terminal-ansi-"
     }
   }
 }
