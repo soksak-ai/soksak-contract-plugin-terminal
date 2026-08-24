@@ -1,18 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import artifact from "../presentation.json" with { type: "json" };
-import { TERMINAL_ANSI_PALETTE, TERMINAL_PRESENTATION_BUDGETS } from "./index";
+import {
+  TERMINAL_ANSI_PALETTE,
+  TERMINAL_PRESENTATION_BUDGETS,
+  TERMINAL_THEME_CONTRACT,
+} from "./index";
 
 describe("portable terminal presentation contract", () => {
   it("publishes the palette construction and latency budgets as data", () => {
     expect(artifact).toEqual({
-      version: 1,
+      version: 2,
       ansi: {
         base: TERMINAL_ANSI_PALETTE.slice(0, 16),
         cube: [0, 95, 135, 175, 215, 255],
         grayscale: { start: 8, step: 10, count: 24 },
       },
       budgets: TERMINAL_PRESENTATION_BUDGETS,
+      theme: TERMINAL_THEME_CONTRACT,
     });
   });
 });

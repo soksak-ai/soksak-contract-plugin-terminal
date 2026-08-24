@@ -4,13 +4,14 @@ import {
   TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS,
   TERMINAL_ANSI_PALETTE,
   TERMINAL_PRESENTATION_BUDGETS,
+  TERMINAL_THEME_CONTRACT,
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.6", () => {
+describe("terminal plugin contract 0.0.7", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.6",
+      id: "soksak-spec-plugin-terminal", version: "0.0.7",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -60,6 +61,22 @@ describe("terminal plugin contract 0.0.6", () => {
     expect(TERMINAL_ANSI_PALETTE[232]).toBe("#080808");
     expect(TERMINAL_ANSI_PALETTE[255]).toBe("#eeeeee");
   });
+  it("defines one host-token and public computed-style contract for every renderer", () => {
+    expect(TERMINAL_THEME_CONTRACT).toEqual({
+      tokens: {
+        foreground: "--fg",
+        background: "--card",
+        cursor: "--acc",
+        cursorAccent: "--card",
+        selectionBackground: "--fg3",
+      },
+      properties: {
+        cursor: "--soksak-terminal-cursor",
+        cursorAccent: "--soksak-terminal-cursor-accent",
+        selectionBackground: "--soksak-terminal-selection-background",
+      },
+    });
+  });
   it("defines renderer and input latency budgets independently of provider results", () => {
     expect(TERMINAL_PRESENTATION_BUDGETS).toEqual({
       renderMs: 1000 / 60,
@@ -73,8 +90,12 @@ describe("terminal plugin contract 0.0.6", () => {
       mountedAtUnixMs: 1, firstVisibleFrameAtUnixMs: 2, firstFocusableInputAtUnixMs: 2,
       lastRenderedAtUnixMs: 3, lastFocusedAtUnixMs: 3, lastInputAtUnixMs: 4, lastPtyWriteAtUnixMs: 5,
       lastRenderDurationMs: 1, maxRenderDurationMs: 1, lastInputToPtyWriteMs: 1,
+      theme: {
+        foreground: "#eeeeec", background: "#1e1e1e", cursor: "#ffffff",
+        cursorAccent: "#1e1e1e", selectionBackground: "#555753",
+      },
     };
-    expect(status.lastRenderDurationMs).toBe(1);
+    expect(status.theme.foreground).toBe("#eeeeec");
   });
   it("validates a plugin's own command declaration", () => {
     const commands = TERMINAL_PLUGIN_COMMANDS.map((name) => ({
