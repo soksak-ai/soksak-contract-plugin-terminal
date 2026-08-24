@@ -32,5 +32,5 @@ test("repository owns public metadata", () => {
   assert.match(workflow, /make verify/);
   assert.match(workflow, /node-version-file: component\/[.]node-version/);
   assert.match(workflow, /package_json_file: component\/package\.json/);
-  assert.match(workflow, /owner-enforced immutable releases must be enabled/);
+  assert.match(workflow, /immutable-releases.*enforced_by_owner/);
 });
