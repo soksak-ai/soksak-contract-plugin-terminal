@@ -1,7 +1,28 @@
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.5",
+  version: "0.0.6",
 } as const);
+
+const baseAnsiPalette = [
+  "#2e3436", "#cc0000", "#4e9a06", "#c4a000",
+  "#3465a4", "#75507b", "#06989a", "#d3d7cf",
+  "#555753", "#ef2929", "#8ae234", "#fce94f",
+  "#729fcf", "#ad7fa8", "#34e2e2", "#eeeeec",
+];
+const hex = (value: number) => value.toString(16).padStart(2, "0");
+const indexedAnsiPalette = [...baseAnsiPalette];
+const cube = [0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff];
+for (let index = 0; index < 216; index += 1) {
+  const red = cube[Math.floor(index / 36) % 6];
+  const green = cube[Math.floor(index / 6) % 6];
+  const blue = cube[index % 6];
+  indexedAnsiPalette.push(`#${hex(red)}${hex(green)}${hex(blue)}`);
+}
+for (let index = 0; index < 24; index += 1) {
+  const channel = hex(8 + index * 10);
+  indexedAnsiPalette.push(`#${channel}${channel}${channel}`);
+}
+export const TERMINAL_ANSI_PALETTE = Object.freeze(indexedAnsiPalette);
 
 export const TERMINAL_PLUGIN_PHASES = Object.freeze([
   "initializing", "preparing-recovery", "applying-snapshot", "attaching-live-stream",
@@ -41,9 +62,11 @@ const statusOutput = output({
   rendererProfile: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
   hostPixels: "object", requested: ["object", "null"], pty: ["object", "null"],
   recovery: ["object", "null"], rendered: ["object", "null"], operation: "string",
+  presentation: "object",
 }, [
   "phase", "pluginId", "engineId", "rendererId", "rendererProfile", "recoveryOutcome",
   "fidelity", "failure", "hostPixels", "requested", "pty", "recovery", "rendered", "operation",
+  "presentation",
 ]);
 const viewInput = () => input({ view: "string" });
 
@@ -96,6 +119,25 @@ export interface TerminalResizeStatus {
   rendered: TerminalRenderedObservation | null;
   operation: string;
 }
+export interface TerminalPresentationStatus {
+  delivery: "bytes" | "frame";
+  mountSequence: number;
+  readySequence: number | null;
+  renderSequence: number;
+  acceptedInputSequence: number;
+  ptyWriteSequence: number;
+  focusedInput: boolean;
+  cursorVisible: boolean;
+  cursorActive: boolean;
+  cursorRow: number | null;
+  cursorColumn: number | null;
+  mountedAtUnixMs: number;
+  firstVisibleFrameAtUnixMs: number | null;
+  firstFocusableInputAtUnixMs: number | null;
+  lastRenderedAtUnixMs: number | null;
+  lastInputAtUnixMs: number | null;
+  lastPtyWriteAtUnixMs: number | null;
+}
 export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   phase: TerminalPluginPhase;
   pluginId: string;
@@ -105,6 +147,7 @@ export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   recoveryOutcome: TerminalRecoveryOutcome;
   fidelity: TerminalRecoveryFidelity;
   failure: TerminalPluginFailure | null;
+  presentation: TerminalPresentationStatus;
 }
 
 export interface TerminalPluginManifestCommand {
