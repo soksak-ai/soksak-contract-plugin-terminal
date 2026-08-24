@@ -39,8 +39,10 @@ describe("terminal plugin contract 0.0.7", () => {
       "hostPixels", "requested", "pty", "recovery", "rendered", "operation", "presentation",
     ]));
 	 expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
-	   "cols", "colsGreaterThan", "colsLessThan", "contains", "phase", "rows", "timeoutMs", "view",
+	   "cols", "colsGreaterThan", "colsLessThan", "contains", "cursorActive", "cursorVisible",
+	   "focusedInput", "phase", "rows", "timeoutMs", "view",
 	 ]);
+	 expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.required).toContain("presentation");
     for (const command of TERMINAL_PLUGIN_COMMANDS) {
       const schema = TERMINAL_PLUGIN_COMMAND_SCHEMAS[command];
       expect(schema.input.additionalProperties).toBe(false);
