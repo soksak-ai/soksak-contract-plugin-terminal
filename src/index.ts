@@ -1,8 +1,10 @@
 import presentation from "../presentation.json" with { type: "json" };
 
+export * from "./pane-key";
+
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.7",
+  version: "0.0.8",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -42,10 +44,12 @@ export type TerminalRendererProfile = "web" | "native-surface";
 
 export const TERMINAL_PLUGIN_COMMANDS = Object.freeze([
   "status", "wait", "archive", "send", "read", "clear", "focus", "recovery-status",
+  "split", "pane.close", "pane.focus", "pane.list", "pane.resize", "pane.equalize",
+  "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "input.compose",
 ] as const);
 export type TerminalPluginCommand = (typeof TERMINAL_PLUGIN_COMMANDS)[number];
 
-type ScalarFieldType = "string" | "number" | "boolean" | "object" | "null";
+type ScalarFieldType = "string" | "number" | "boolean" | "object" | "array" | "null";
 type FieldType = ScalarFieldType | readonly ScalarFieldType[];
 export interface TerminalCommandObjectSchema {
   properties: Readonly<Record<string, FieldType>>;
@@ -62,55 +66,111 @@ const input = (properties: Record<string, FieldType>, required: string[] = []): 
   Object.freeze({ properties: Object.freeze(properties), required: Object.freeze(required), additionalProperties: false });
 const output = (properties: Record<string, FieldType>, required: string[]): TerminalCommandObjectSchema =>
   input(properties, required);
+const nullableString: FieldType = ["string", "null"];
 const statusOutput = output({
   phase: "string", pluginId: "string", engineId: "string", rendererId: "string",
   rendererProfile: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
   hostPixels: "object", requested: ["object", "null"], pty: ["object", "null"],
   recovery: ["object", "null"], rendered: ["object", "null"], operation: "string",
-  presentation: "object",
+  presentation: "object", view: nullableString, pane: nullableString, panes: "array",
 }, [
   "phase", "pluginId", "engineId", "rendererId", "rendererProfile", "recoveryOutcome",
   "fidelity", "failure", "hostPixels", "requested", "pty", "recovery", "rendered", "operation",
-  "presentation",
+  "presentation", "view", "pane", "panes",
 ]);
-const viewInput = () => input({ view: "string" });
+// Every command addresses a view; most address one pane inside it.
+const viewInput = (properties: Record<string, FieldType> = {}, required: string[] = []) =>
+  input({ view: "string", ...properties }, required);
+const paneInput = (properties: Record<string, FieldType> = {}, required: string[] = []) =>
+  input({ view: "string", pane: "string", ...properties }, required);
 
 export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
-  status: { danger: "none", input: viewInput(), output: statusOutput },
+  status: { danger: "none", input: paneInput(), output: statusOutput },
   wait: {
     danger: "none",
-    input: input({
-      view: "string", phase: "string", timeoutMs: "number", contains: "string",
+    input: paneInput({
+      phase: "string", timeoutMs: "number", contains: "string",
       cols: "number", colsLessThan: "number", colsGreaterThan: "number", rows: "number",
-      focusedInput: "boolean", cursorVisible: "boolean", cursorActive: "boolean",
+      focusedInput: "boolean", cursorVisible: "boolean", cursorActive: "boolean", idleMs: "number",
     }, ["phase"]),
     output: output({
       phase: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
-      cols: "number", rows: "number", operation: "string", presentation: "object",
-    }, ["phase", "recoveryOutcome", "fidelity", "presentation"]),
+      cols: "number", rows: "number", operation: "string", presentation: "object", pane: nullableString,
+    }, ["phase", "recoveryOutcome", "fidelity", "presentation", "pane"]),
   },
   archive: {
-    danger: "none", input: viewInput(),
+    danger: "none", input: paneInput(),
     output: output({ archived: "boolean", bytes: "number" }, ["archived"]),
   },
   send: {
-    danger: "inject", input: input({ view: "string", data: "string" }, ["data"]),
+    danger: "inject", input: paneInput({ data: "string" }, ["data"]),
     output: output({ sent: ["number", "boolean"] }, ["sent"]),
   },
   read: {
-    danger: "none", input: input({ view: "string", lines: "number" }),
+    danger: "none", input: paneInput({ lines: "number" }),
     output: output({ text: "string" }, ["text"]),
   },
   clear: {
-    danger: "none", input: viewInput(), output: output({ cleared: "boolean" }, ["cleared"]),
+    danger: "none", input: paneInput(), output: output({ cleared: "boolean" }, ["cleared"]),
   },
   focus: {
-    danger: "none", input: viewInput(), output: output({ focused: "boolean" }, ["focused"]),
+    danger: "none", input: paneInput(), output: output({ focused: "boolean" }, ["focused"]),
   },
-  "recovery-status": { danger: "none", input: viewInput(), output: statusOutput },
+  "recovery-status": { danger: "none", input: paneInput(), output: statusOutput },
+  split: {
+    danger: "none", input: paneInput({ direction: "string", command: "string" }, ["direction"]),
+    output: output({ view: nullableString, pane: nullableString, engineId: "string" }, ["view", "pane", "engineId"]),
+  },
+  "pane.close": {
+    danger: "none", input: paneInput(),
+    output: output({ closed: "boolean", focused: nullableString }, ["closed", "focused"]),
+  },
+  "pane.focus": {
+    danger: "none", input: paneInput({ dir: "string", cycle: "number" }),
+    output: output({ focused: nullableString }, ["focused"]),
+  },
+  "pane.list": {
+    danger: "none", input: viewInput(),
+    output: output({
+      view: nullableString, focused: nullableString, maximized: nullableString, broadcast: "boolean", panes: "array",
+    }, ["view", "focused", "maximized", "broadcast", "panes"]),
+  },
+  "pane.resize": {
+    danger: "none", input: paneInput({ side: "string", px: "number", cells: "number" }, ["side"]),
+    output: output({ applied: "boolean" }, ["applied"]),
+  },
+  "pane.equalize": {
+    danger: "none", input: viewInput(), output: output({ applied: "boolean" }, ["applied"]),
+  },
+  "pane.maximize": {
+    danger: "none", input: paneInput(), output: output({ maximized: nullableString }, ["maximized"]),
+  },
+  "pane.broadcast": {
+    danger: "none", input: viewInput({ on: "boolean" }, ["on"]),
+    output: output({ broadcast: "boolean" }, ["broadcast"]),
+  },
+  "pane.title": {
+    danger: "none", input: paneInput({ title: nullableString }, ["title"]),
+    output: output({ title: nullableString }, ["title"]),
+  },
+  scroll: {
+    danger: "none", input: paneInput({ lines: "number", offset: "number", edge: "string" }),
+    output: output({ pane: nullableString, offset: "number", historySize: "number" }, ["pane", "offset", "historySize"]),
+  },
+  selection: {
+    danger: "none", input: paneInput(),
+    output: output({ pane: nullableString, text: "string" }, ["pane", "text"]),
+  },
+  "input.compose": {
+    danger: "inject", input: paneInput({ updates: "array", data: "string" }, ["updates", "data"]),
+    output: output({ emitted: "number" }, ["emitted"]),
+  },
 } as const satisfies Record<TerminalPluginCommand, TerminalCommandSchema>);
+
+// Instance nodes are "<id>/<k>" for the pane with index k ("terminal-screen/2", "pane/2",
+// "gutter/2/right"). A view laid out as one bare pane keeps the bare ids.
 export const TERMINAL_PLUGIN_NODES = Object.freeze([
-  "terminal-root", "terminal-screen", "terminal-input", "terminal-restore-status",
+  "terminal-root", "terminal-screen", "terminal-input", "terminal-restore-status", "pane", "gutter",
 ] as const);
 
 export interface TerminalPluginFailure { code: string; message: string }
@@ -160,6 +220,17 @@ export interface TerminalPresentationTheme {
   cursorAccent: string;
   selectionBackground: string;
 }
+export interface TerminalPaneSummary {
+  pane: string;
+  engineId: string;
+  phase: TerminalPluginPhase;
+  cols: number;
+  rows: number;
+  offset: number;
+  historySize: number;
+  title: string | null;
+  cwd: string | null;
+}
 export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   phase: TerminalPluginPhase;
   pluginId: string;
@@ -170,6 +241,11 @@ export interface TerminalPluginPublicStatus extends TerminalResizeStatus {
   fidelity: TerminalRecoveryFidelity;
   failure: TerminalPluginFailure | null;
   presentation: TerminalPresentationStatus;
+}
+export interface TerminalPluginViewStatus extends TerminalPluginPublicStatus {
+  view: string | null;
+  pane: string | null;
+  panes: TerminalPaneSummary[];
 }
 
 export interface TerminalPluginManifestCommand {

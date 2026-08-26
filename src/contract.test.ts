@@ -8,10 +8,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.7", () => {
+describe("terminal plugin contract 0.0.8", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.7",
+      id: "soksak-spec-plugin-terminal", version: "0.0.8",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -20,9 +20,14 @@ describe("terminal plugin contract 0.0.7", () => {
     expect(TERMINAL_PLUGIN_PHASES).toContain("degraded-tail");
   });
   it("defines the common command and node surfaces", () => {
-    expect(new Set(TERMINAL_PLUGIN_COMMANDS).size).toBe(8);
-    expect(TERMINAL_PLUGIN_COMMANDS).toContain("wait");
-    expect(new Set(TERMINAL_PLUGIN_NODES).size).toBe(4);
+    expect(new Set(TERMINAL_PLUGIN_COMMANDS).size).toBe(20);
+    expect(TERMINAL_PLUGIN_COMMANDS).toEqual(expect.arrayContaining([
+      "wait", "split", "pane.close", "pane.focus", "pane.list", "pane.resize", "pane.equalize",
+      "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "input.compose",
+    ]));
+    expect(new Set(TERMINAL_PLUGIN_NODES).size).toBe(6);
+    expect(TERMINAL_PLUGIN_NODES).toContain("pane");
+    expect(TERMINAL_PLUGIN_NODES).toContain("gutter");
   });
   it("defines one input and output schema for every common command", () => {
     expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS)).toEqual([...TERMINAL_PLUGIN_COMMANDS]);
@@ -33,21 +38,39 @@ describe("terminal plugin contract 0.0.7", () => {
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait).toMatchObject({
       input: { required: ["phase"] },
-      output: { required: ["phase", "recoveryOutcome", "fidelity", "presentation"] },
+      output: { required: ["phase", "recoveryOutcome", "fidelity", "presentation", "pane"] },
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.required).toEqual(expect.arrayContaining([
       "hostPixels", "requested", "pty", "recovery", "rendered", "operation", "presentation",
+      "view", "pane", "panes",
     ]));
-	 expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
-	   "cols", "colsGreaterThan", "colsLessThan", "contains", "cursorActive", "cursorVisible",
-	   "focusedInput", "phase", "rows", "timeoutMs", "view",
-	 ]);
-	 expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.required).toContain("presentation");
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.properties.panes).toBe("array");
+    expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
+      "cols", "colsGreaterThan", "colsLessThan", "contains", "cursorActive", "cursorVisible",
+      "focusedInput", "idleMs", "pane", "phase", "rows", "timeoutMs", "view",
+    ]);
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.required).toContain("presentation");
+    const viewOnly = new Set(["pane.list", "pane.equalize", "pane.broadcast"]);
     for (const command of TERMINAL_PLUGIN_COMMANDS) {
       const schema = TERMINAL_PLUGIN_COMMAND_SCHEMAS[command];
       expect(schema.input.additionalProperties).toBe(false);
       expect(schema.output.additionalProperties).toBe(false);
+      expect(schema.input.properties.view).toBe("string");
+      if (viewOnly.has(command)) expect(schema.input.properties).not.toHaveProperty("pane");
+      else expect(schema.input.properties.pane).toBe("string");
     }
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.split).toMatchObject({
+      danger: "none", input: { required: ["direction"] }, output: { required: ["view", "pane", "engineId"] },
+    });
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["input.compose"]).toMatchObject({
+      danger: "inject", input: { required: ["updates", "data"], properties: { updates: "array" } },
+      output: { required: ["emitted"] },
+    });
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["pane.title"].input.properties.title).toEqual(["string", "null"]);
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.scroll.output.required).toEqual(["pane", "offset", "historySize"]);
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["pane.list"].output.required).toEqual([
+      "view", "focused", "maximized", "broadcast", "panes",
+    ]);
   });
 
   it("defines the canonical ANSI palette shared by every renderer", () => {
@@ -108,7 +131,11 @@ describe("terminal plugin contract 0.0.7", () => {
     expect(validateTerminalPluginManifestCommands(commands)).toEqual([]);
     expect(validateTerminalPluginManifestCommands(commands.filter((value) => value.name !== "archive")))
       .toContain("missing terminal command: archive");
+    expect(validateTerminalPluginManifestCommands(commands.filter((value) => value.name !== "split")))
+      .toContain("missing terminal command: split");
     expect(validateTerminalPluginManifestCommands(commands.map((value) => value.name === "send" ? { name: "send" } : value)))
       .toContain("terminal command send danger is none, expected inject");
+    expect(validateTerminalPluginManifestCommands(commands.map((value) => value.name === "input.compose" ? { name: "input.compose" } : value)))
+      .toContain("terminal command input.compose danger is none, expected inject");
   });
 });
