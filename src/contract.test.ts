@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
   TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS,
@@ -9,6 +10,12 @@ import {
 } from "./index";
 
 describe("terminal plugin contract 0.0.8", () => {
+  it("defines read independently of renderer cache retention", () => {
+    const spec = readFileSync(new URL("../SPEC.md", import.meta.url), "utf8");
+    expect(spec).toContain("`read` returns the addressed pane's current viewport");
+    expect(spec).toContain("Reading history requires `scroll` followed by `read`");
+    expect(spec).toContain("cache retention never changes the answer");
+  });
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
       id: "soksak-spec-plugin-terminal", version: "0.0.8",
