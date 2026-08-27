@@ -173,6 +173,13 @@ export const TERMINAL_PLUGIN_NODES = Object.freeze([
   "terminal-root", "terminal-screen", "terminal-input", "terminal-restore-status", "pane", "gutter",
 ] as const);
 
+// Verbs the app's surface door accepts for one native terminal surface. `input` is an
+// injection like `send`; an unknown verb is refused by name, never mapped to a nearest one.
+export const TERMINAL_SURFACE_DELIVER_VERBS = Object.freeze([
+  "snapshot", "state", "read", "scroll", "selection", "focus", "input", "theme", "stop", "archive",
+] as const);
+export type TerminalSurfaceDeliverVerb = (typeof TERMINAL_SURFACE_DELIVER_VERBS)[number];
+
 export interface TerminalPluginFailure { code: string; message: string }
 export interface TerminalSize { cols: number; rows: number }
 export interface TerminalSequencedSize extends TerminalSize { eventSequence: number }

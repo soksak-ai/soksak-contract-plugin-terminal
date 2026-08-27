@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
-  TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS,
+  TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS, TERMINAL_SURFACE_DELIVER_VERBS,
   TERMINAL_ANSI_PALETTE,
   TERMINAL_PRESENTATION_BUDGETS,
   TERMINAL_THEME_CONTRACT,
@@ -28,6 +28,11 @@ describe("terminal plugin contract 0.0.9", () => {
     expect(new Set(TERMINAL_PLUGIN_NODES).size).toBe(6);
     expect(TERMINAL_PLUGIN_NODES).toContain("pane");
     expect(TERMINAL_PLUGIN_NODES).toContain("gutter");
+  });
+  it("defines the deliver verbs of the native surface door", () => {
+    expect(TERMINAL_SURFACE_DELIVER_VERBS).toEqual([
+      "snapshot", "state", "read", "scroll", "selection", "focus", "input", "theme", "stop", "archive",
+    ]);
   });
   it("defines one input and output schema for every common command", () => {
     expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS)).toEqual([...TERMINAL_PLUGIN_COMMANDS]);
