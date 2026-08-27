@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
   TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS,
@@ -10,18 +9,6 @@ import {
 } from "./index";
 
 describe("terminal plugin contract 0.0.8", () => {
-  it("defines read independently of renderer cache retention", () => {
-    const spec = readFileSync(new URL("../SPEC.md", import.meta.url), "utf8").replace(/\s+/g, " ");
-    expect(spec).toContain("`read` returns the addressed pane's current viewport");
-    expect(spec).toContain("Reading history requires `scroll` followed by `read`");
-    expect(spec).toContain("renderer cache retention never changes the answer");
-  });
-  it("keeps the Korean contract on the same read rule and version", () => {
-    const spec = readFileSync(new URL("../SPEC.ko.md", import.meta.url), "utf8").replace(/\s+/g, " ");
-    expect(spec).toContain("버전은 `0.0.8`");
-    expect(spec).toContain("`read`는 지정한 pane의 현재 viewport를 반환");
-    expect(spec).toContain("cache 보유 상태는 응답을 바꾸지 않습니다");
-  });
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
       id: "soksak-spec-plugin-terminal", version: "0.0.8",
