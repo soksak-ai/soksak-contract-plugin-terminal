@@ -8,10 +8,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.9", () => {
+describe("terminal plugin contract 0.0.10", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.9",
+      id: "soksak-spec-plugin-terminal", version: "0.0.10",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -127,6 +127,12 @@ describe("terminal plugin contract 0.0.9", () => {
       },
     };
     expect(status.theme.foreground).toBe("#eeeeec");
+  });
+  it("admits surface delivery beside bytes and frame", () => {
+    const deliveries: Array<import("./index").TerminalPresentationStatus["delivery"]> = [
+      "bytes", "frame", "surface",
+    ];
+    expect(deliveries).toHaveLength(3);
   });
   it("validates a plugin's own command declaration", () => {
     const commands = TERMINAL_PLUGIN_COMMANDS.map((name) => ({

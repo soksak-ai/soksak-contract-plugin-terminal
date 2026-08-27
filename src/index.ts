@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.9",
+  version: "0.0.10",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -196,7 +196,7 @@ export interface TerminalResizeStatus {
   operation: string;
 }
 export interface TerminalPresentationStatus {
-  delivery: "bytes" | "frame";
+  delivery: "bytes" | "frame" | "surface";
   mountSequence: number;
   readySequence: number | null;
   renderSequence: number;
