@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.14",
+  version: "0.0.15",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -315,7 +315,77 @@ export interface TerminalCursorAnimationStatus {
   intervalMs: number;
   phase: "steady" | "on" | "off";
 }
-export interface TerminalPresentationStatus {
+export type TerminalThemeMode = "light" | "dark";
+export interface TerminalThemePalette {
+  foreground: string;
+  background: string;
+  cursor: string;
+  cursorAccent: string;
+  selectionBackground: string;
+  ansi: readonly string[];
+}
+export interface TerminalThemeOverrides {
+  foreground: string | null;
+  background: string | null;
+  cursor: string | null;
+  ansi: readonly (string | null)[];
+}
+export interface TerminalThemeStatus {
+  themeMode: TerminalThemeMode;
+  baseTheme: TerminalThemePalette;
+  terminalOverrides: TerminalThemeOverrides;
+  effectiveTheme: TerminalThemePalette;
+}
+
+export const TERMINAL_THEME_EVENT = "soksak:terminal-colors" as const;
+export interface TerminalThemeEventDetail extends TerminalThemeStatus {
+  pane: string;
+}
+
+const terminalColorPattern = /^#[0-9a-f]{6}$/;
+
+function requireTerminalColor(value: string, name: string): void {
+  if (!terminalColorPattern.test(value)) {
+    throw new Error(`${name} must be a lowercase #rrggbb color`);
+  }
+}
+
+function requireTerminalPalette(value: TerminalThemePalette, name: string): void {
+  for (const key of ["foreground", "background", "cursor", "cursorAccent", "selectionBackground"] as const) {
+    requireTerminalColor(value[key], `${name}.${key}`);
+  }
+  if (value.ansi.length !== 256) throw new Error(`${name}.ansi must contain 256 colors`);
+  value.ansi.forEach((color, index) => requireTerminalColor(color, `${name}.ansi[${index}]`));
+}
+
+export function emptyTerminalThemeOverrides(): TerminalThemeOverrides {
+  return { foreground: null, background: null, cursor: null, ansi: Array(256).fill(null) };
+}
+
+export function resolveTerminalTheme(
+  base: TerminalThemePalette,
+  overrides: TerminalThemeOverrides,
+): TerminalThemePalette {
+  requireTerminalPalette(base, "baseTheme");
+  if (overrides.ansi.length !== 256) throw new Error("terminalOverrides.ansi must contain 256 entries");
+  for (const key of ["foreground", "background", "cursor"] as const) {
+    const color = overrides[key];
+    if (color !== null) requireTerminalColor(color, `terminalOverrides.${key}`);
+  }
+  overrides.ansi.forEach((color, index) => {
+    if (color !== null) requireTerminalColor(color, `terminalOverrides.ansi[${index}]`);
+  });
+  return {
+    foreground: overrides.foreground ?? base.foreground,
+    background: overrides.background ?? base.background,
+    cursor: overrides.cursor ?? base.cursor,
+    cursorAccent: base.cursorAccent,
+    selectionBackground: base.selectionBackground,
+    ansi: base.ansi.map((color, index) => overrides.ansi[index] ?? color),
+  };
+}
+
+export interface TerminalPresentationStatus extends TerminalThemeStatus {
   delivery: "bytes" | "frame" | "surface";
   mountSequence: number;
   readySequence: number | null;
@@ -345,14 +415,6 @@ export interface TerminalPresentationStatus {
   lastRenderDurationMs: number | null;
   maxRenderDurationMs: number | null;
   lastInputToPtyWriteMs: number | null;
-  theme: TerminalPresentationTheme;
-}
-export interface TerminalPresentationTheme {
-  foreground: string;
-  background: string;
-  cursor: string;
-  cursorAccent: string;
-  selectionBackground: string;
 }
 export interface TerminalPaneSummary {
   pane: string;

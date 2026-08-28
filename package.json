@@ -1,6 +1,6 @@
 {
   "name": "@soksak/soksak-contract-plugin-terminal",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "engines": {
     "node": "26.7.0"
   },
