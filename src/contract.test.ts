@@ -135,6 +135,13 @@ describe("terminal plugin contract 0.0.11", () => {
     const status: import("./index").TerminalPresentationStatus = {
       delivery: "frame", mountSequence: 1, readySequence: 1, renderSequence: 1, focusSequence: 1,
       acceptedInputSequence: 1, ptyWriteSequence: 1, focusedInput: true,
+      bracketedPaste: true,
+      selection: { active: true, text: "selected" },
+      clipboardPermission: { read: true, write: true },
+      drop: {
+        fileGrantState: "available",
+        last: { accepted: 1, refused: 0, mode: "path" },
+      },
       cursorVisible: true, cursorActive: true, cursorRow: 0, cursorColumn: 0,
       mountedAtUnixMs: 1, firstVisibleFrameAtUnixMs: 2, firstFocusableInputAtUnixMs: 2,
       lastRenderedAtUnixMs: 3, lastFocusedAtUnixMs: 3, lastInputAtUnixMs: 4, lastPtyWriteAtUnixMs: 5,
@@ -145,6 +152,7 @@ describe("terminal plugin contract 0.0.11", () => {
       },
     };
     expect(status.theme.foreground).toBe("#eeeeec");
+    expect(status.drop.last?.accepted).toBe(1);
   });
   it("admits surface delivery beside bytes and frame", () => {
     const deliveries: Array<import("./index").TerminalPresentationStatus["delivery"]> = [
