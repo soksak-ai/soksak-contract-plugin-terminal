@@ -9,10 +9,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.13", () => {
+describe("terminal plugin contract 0.0.14", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.13",
+      id: "soksak-spec-plugin-terminal", version: "0.0.14",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -142,7 +142,8 @@ describe("terminal plugin contract 0.0.13", () => {
         fileGrantState: "available",
         last: { accepted: 1, refused: 0, mode: "path" },
       },
-      cursorVisible: true, cursorActive: true, cursorRow: 0, cursorColumn: 0,
+      cursorVisible: true, cursorActive: true, cursorShape: "bar", cursorBlinking: true,
+      cursorAnimation: { intervalMs: 750, phase: "on" }, cursorRow: 0, cursorColumn: 0,
       mountedAtUnixMs: 1, firstVisibleFrameAtUnixMs: 2, firstFocusableInputAtUnixMs: 2,
       lastRenderedAtUnixMs: 3, lastFocusedAtUnixMs: 3, lastInputAtUnixMs: 4, lastPtyWriteAtUnixMs: 5,
       lastRenderDurationMs: 1, maxRenderDurationMs: 1, lastInputToPtyWriteMs: 1,
@@ -153,6 +154,7 @@ describe("terminal plugin contract 0.0.13", () => {
     };
     expect(status.theme.foreground).toBe("#eeeeec");
     expect(status.drop.last?.accepted).toBe(1);
+    expect(status.cursorAnimation).toEqual({ intervalMs: 750, phase: "on" });
   });
   it("admits surface delivery beside bytes and frame", () => {
     const deliveries: Array<import("./index").TerminalPresentationStatus["delivery"]> = [

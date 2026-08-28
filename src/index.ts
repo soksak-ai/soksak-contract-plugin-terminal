@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.13",
+  version: "0.0.14",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -310,6 +310,11 @@ export interface TerminalDropStatus {
   fileGrantState: "available" | "unavailable";
   last: TerminalDropResultStatus | null;
 }
+export type TerminalCursorShape = "block" | "underline" | "bar";
+export interface TerminalCursorAnimationStatus {
+  intervalMs: number;
+  phase: "steady" | "on" | "off";
+}
 export interface TerminalPresentationStatus {
   delivery: "bytes" | "frame" | "surface";
   mountSequence: number;
@@ -325,6 +330,9 @@ export interface TerminalPresentationStatus {
   drop: TerminalDropStatus;
   cursorVisible: boolean;
   cursorActive: boolean;
+  cursorShape: TerminalCursorShape;
+  cursorBlinking: boolean;
+  cursorAnimation: TerminalCursorAnimationStatus;
   cursorRow: number | null;
   cursorColumn: number | null;
   mountedAtUnixMs: number;
