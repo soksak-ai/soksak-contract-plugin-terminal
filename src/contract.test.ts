@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as contract from "./index";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
   TERMINAL_PLUGIN_PHASES, TERMINAL_PLUGIN_COMMAND_SCHEMAS, TERMINAL_SURFACE_DELIVER_VERBS,
@@ -46,6 +47,32 @@ describe("terminal plugin contract 0.0.14", () => {
       expect(component.status.length).toBeGreaterThan(0);
       expect(component.events.length).toBeGreaterThan(0);
     }
+  });
+  it("defines base, override, effective and event state for terminal colors", () => {
+    const theme = TERMINAL_V1_COMPONENTS.find(({ id }) => id === "theme");
+    expect(theme).toMatchObject({
+      status: ["themeMode", "baseTheme", "terminalOverrides", "effectiveTheme"],
+      events: ["theme.changed", "terminalColors.changed"],
+    });
+    const runtime = contract as unknown as Record<string, unknown>;
+    expect(runtime.TERMINAL_THEME_EVENT).toBe("soksak:terminal-colors");
+    expect(typeof runtime.resolveTerminalTheme).toBe("function");
+    const resolve = runtime.resolveTerminalTheme as (base: unknown, overrides: unknown) => unknown;
+    const base = {
+      foreground: "#111111", background: "#eeeeee", cursor: "#333333",
+      cursorAccent: "#eeeeee", selectionBackground: "#bbbbbb", ansi: [...TERMINAL_ANSI_PALETTE],
+    };
+    const ansi = Array<string | null>(256).fill(null);
+    ansi[1] = "#123456";
+    const overrides = {
+      foreground: "#abcdef", background: null, cursor: "#654321", ansi,
+    };
+    expect(resolve(base, overrides)).toMatchObject({
+      foreground: "#abcdef", background: "#eeeeee", cursor: "#654321",
+      ansi: expect.arrayContaining(["#123456"]),
+    });
+    expect((resolve(base, { foreground: null, background: null, cursor: null, ansi: Array(256).fill(null) }) as { foreground: string }).foreground)
+      .toBe("#111111");
   });
   it("defines the deliver verbs of the native surface door", () => {
     expect(TERMINAL_SURFACE_DELIVER_VERBS).toEqual([
