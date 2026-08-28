@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.10",
+  version: "0.0.11",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -45,7 +45,8 @@ export type TerminalRendererProfile = "web" | "native-surface";
 export const TERMINAL_PLUGIN_COMMANDS = Object.freeze([
   "status", "wait", "archive", "send", "read", "clear", "focus", "recovery-status",
   "split", "pane.close", "pane.focus", "pane.list", "pane.resize", "pane.equalize",
-  "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "input.compose",
+  "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "copy", "paste",
+  "drop", "input.compose",
 ] as const);
 export type TerminalPluginCommand = (typeof TERMINAL_PLUGIN_COMMANDS)[number];
 
@@ -161,6 +162,18 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
     danger: "none", input: paneInput(),
     output: output({ pane: nullableString, text: "string" }, ["pane", "text"]),
   },
+  copy: {
+    danger: "none", input: paneInput(),
+    output: output({ pane: nullableString, text: "string", copied: "boolean" }, ["pane", "text", "copied"]),
+  },
+  paste: {
+    danger: "inject", input: paneInput({ data: "string" }),
+    output: output({ pane: nullableString, pasted: "boolean", sent: "number" }, ["pane", "pasted", "sent"]),
+  },
+  drop: {
+    danger: "inject", input: paneInput({ grants: "array", mode: "string" }, ["grants"]),
+    output: output({ pane: nullableString, accepted: "number", mode: "string" }, ["pane", "accepted", "mode"]),
+  },
   "input.compose": {
     danger: "inject", input: paneInput({ updates: "array", data: "string" }, ["updates", "data"]),
     output: output({ emitted: "number" }, ["emitted"]),
@@ -170,8 +183,92 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
 // Instance nodes are "<id>/<k>" for the pane with index k ("terminal-screen/2", "pane/2",
 // "gutter/2/right"). A view laid out as one bare pane keeps the bare ids.
 export const TERMINAL_PLUGIN_NODES = Object.freeze([
-  "terminal-root", "terminal-screen", "terminal-input", "terminal-restore-status", "pane", "gutter",
+  "terminal-root", "terminal-screen", "terminal-input", "terminal-drop-target",
+  "terminal-restore-status", "pane", "gutter",
 ] as const);
+
+export interface TerminalV1Component {
+  id: string;
+  level: "required" | "capability";
+  commands: readonly TerminalPluginCommand[];
+  status: readonly string[];
+  events: readonly string[];
+  nodes: readonly (typeof TERMINAL_PLUGIN_NODES)[number][];
+}
+
+const component = (value: TerminalV1Component): TerminalV1Component => Object.freeze({
+  ...value,
+  commands: Object.freeze([...value.commands]),
+  status: Object.freeze([...value.status]),
+  events: Object.freeze([...value.events]),
+  nodes: Object.freeze([...value.nodes]),
+});
+
+export const TERMINAL_V1_COMPONENTS = Object.freeze([
+  component({
+    id: "input-ime", level: "required",
+    commands: ["send", "input.compose", "focus"],
+    status: ["focusedInput", "acceptedInputSequence", "ptyWriteSequence", "bracketedPaste"],
+    events: ["input.accepted", "pty.write", "composition.changed"],
+    nodes: ["terminal-input"],
+  }),
+  component({
+    id: "selection-clipboard", level: "required",
+    commands: ["selection", "copy", "paste"],
+    status: ["selection", "clipboardPermission"],
+    events: ["selection.changed", "clipboard.copied", "clipboard.pasted"],
+    nodes: ["terminal-screen", "terminal-input"],
+  }),
+  component({
+    id: "file-image-drop", level: "required",
+    commands: ["drop"],
+    status: ["lastDrop", "fileGrantState"],
+    events: ["drop.accepted", "drop.refused"],
+    nodes: ["terminal-drop-target"],
+  }),
+  component({
+    id: "tui-pane-control", level: "required",
+    commands: ["split", "send", "read", "pane.list", "pane.focus", "pane.close"],
+    status: ["panes", "focusedPane", "compatibilityProfile"],
+    events: ["pane.created", "pane.focused", "pane.closed"],
+    nodes: ["pane", "gutter"],
+  }),
+  component({
+    id: "scroll", level: "required",
+    commands: ["scroll", "read"],
+    status: ["historySize", "offset", "followMode"],
+    events: ["viewport.changed", "output.followed"],
+    nodes: ["terminal-screen"],
+  }),
+  component({
+    id: "cursor", level: "required",
+    commands: ["focus"],
+    status: ["cursorVisible", "cursorActive", "cursorShape", "cursorBlinking", "cursorAnimation"],
+    events: ["cursor.changed", "focus.changed"],
+    nodes: ["terminal-screen", "terminal-input"],
+  }),
+  component({
+    id: "theme", level: "required",
+    commands: ["status"],
+    status: ["themeMode", "baseTheme", "terminalOverrides", "effectiveTheme"],
+    events: ["theme.changed", "terminalColors.changed"],
+    nodes: ["terminal-root", "terminal-screen"],
+  }),
+  component({
+    id: "performance", level: "required",
+    commands: ["status"],
+    status: ["renderDuration", "inputToWriteLatency", "damageRows", "cacheUsage", "gapCount"],
+    events: ["frame.applied", "gap.observed"],
+    nodes: ["terminal-screen"],
+  }),
+  component({
+    id: "inline-images", level: "capability",
+    commands: ["status"],
+    status: ["inlineImageProtocols", "inlineImageLimits"],
+    events: ["image.presented", "image.refused"],
+    nodes: ["terminal-screen"],
+  }),
+] as const satisfies readonly TerminalV1Component[]);
 
 // Verbs the app's surface door accepts for one native terminal surface. `input` is an
 // injection like `send`; an unknown verb is refused by name, never mapped to a nearest one.
