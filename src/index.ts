@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.12",
+  version: "0.0.13",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;

@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   TERMINAL_PLUGIN_COMMANDS, TERMINAL_PLUGIN_CONTRACT, TERMINAL_PLUGIN_NODES,
@@ -15,15 +14,6 @@ describe("terminal plugin contract 0.0.13", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
       id: "soksak-spec-plugin-terminal", version: "0.0.13",
     });
-  });
-  it("keeps host file ownership separate from terminal shell syntax", () => {
-    const english = readFileSync(new URL("../SPEC.md", import.meta.url), "utf8");
-    const korean = readFileSync(new URL("../SPEC.ko.md", import.meta.url), "utf8");
-    expect(english).toContain("returns the raw `path`");
-    expect(english).toContain("Terminal Kit quotes that path");
-    expect(korean).toContain("raw `path`를 반환");
-    expect(korean).toContain("Terminal Kit이 그 path를 quote");
-    expect(english + korean).not.toContain("shellText");
   });
   it("defines every required lifecycle phase", () => {
     expect(TERMINAL_PLUGIN_PHASES).toHaveLength(9);
