@@ -5,13 +5,14 @@ import {
   TERMINAL_ANSI_PALETTE,
   TERMINAL_PRESENTATION_BUDGETS,
   TERMINAL_THEME_CONTRACT,
+  TERMINAL_V1_COMPONENTS,
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.10", () => {
+describe("terminal plugin contract 0.0.11", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.10",
+      id: "soksak-spec-plugin-terminal", version: "0.0.11",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -20,14 +21,31 @@ describe("terminal plugin contract 0.0.10", () => {
     expect(TERMINAL_PLUGIN_PHASES).toContain("degraded-tail");
   });
   it("defines the common command and node surfaces", () => {
-    expect(new Set(TERMINAL_PLUGIN_COMMANDS).size).toBe(20);
+    expect(new Set(TERMINAL_PLUGIN_COMMANDS).size).toBe(23);
     expect(TERMINAL_PLUGIN_COMMANDS).toEqual(expect.arrayContaining([
       "wait", "split", "pane.close", "pane.focus", "pane.list", "pane.resize", "pane.equalize",
       "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "input.compose",
+      "copy", "paste", "drop",
     ]));
-    expect(new Set(TERMINAL_PLUGIN_NODES).size).toBe(6);
+    expect(new Set(TERMINAL_PLUGIN_NODES).size).toBe(7);
     expect(TERMINAL_PLUGIN_NODES).toContain("pane");
     expect(TERMINAL_PLUGIN_NODES).toContain("gutter");
+    expect(TERMINAL_PLUGIN_NODES).toContain("terminal-drop-target");
+  });
+  it("publishes the complete Terminal v1 component matrix", () => {
+    expect(TERMINAL_V1_COMPONENTS.map(({ id }) => id)).toEqual([
+      "input-ime", "selection-clipboard", "file-image-drop", "tui-pane-control",
+      "scroll", "cursor", "theme", "performance", "inline-images",
+    ]);
+    expect(TERMINAL_V1_COMPONENTS.slice(0, -1).every(({ level }) => level === "required")).toBe(true);
+    expect(TERMINAL_V1_COMPONENTS.at(-1)?.level).toBe("capability");
+    for (const component of TERMINAL_V1_COMPONENTS) {
+      expect(new Set(component.commands).size).toBe(component.commands.length);
+      expect(component.commands.every((command) => TERMINAL_PLUGIN_COMMANDS.includes(command))).toBe(true);
+      expect(component.nodes.every((node) => TERMINAL_PLUGIN_NODES.includes(node))).toBe(true);
+      expect(component.status.length).toBeGreaterThan(0);
+      expect(component.events.length).toBeGreaterThan(0);
+    }
   });
   it("defines the deliver verbs of the native surface door", () => {
     expect(TERMINAL_SURFACE_DELIVER_VERBS).toEqual([
@@ -146,6 +164,8 @@ describe("terminal plugin contract 0.0.10", () => {
       .toContain("missing terminal command: split");
     expect(validateTerminalPluginManifestCommands(commands.map((value) => value.name === "send" ? { name: "send" } : value)))
       .toContain("terminal command send danger is none, expected inject");
+    expect(validateTerminalPluginManifestCommands(commands.map((value) => value.name === "send" ? { name: "send" } : value))
+      .filter((error) => error === "terminal command send danger is none, expected inject")).toHaveLength(1);
     expect(validateTerminalPluginManifestCommands(commands.map((value) => value.name === "input.compose" ? { name: "input.compose" } : value)))
       .toContain("terminal command input.compose danger is none, expected inject");
   });
