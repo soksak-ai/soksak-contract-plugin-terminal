@@ -10,10 +10,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.14", () => {
+describe("terminal plugin contract 0.0.15", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.14",
+      id: "soksak-spec-plugin-terminal", version: "0.0.15",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -67,12 +67,20 @@ describe("terminal plugin contract 0.0.14", () => {
     const overrides = {
       foreground: "#abcdef", background: null, cursor: "#654321", ansi,
     };
-    expect(resolve(base, overrides)).toMatchObject({
+    const effective = resolve(base, overrides) as { foreground: string; background: string; cursor: string; ansi: string[] };
+    expect(effective).toMatchObject({
       foreground: "#abcdef", background: "#eeeeee", cursor: "#654321",
-      ansi: expect.arrayContaining(["#123456"]),
     });
+    expect(effective.ansi[1]).toBe("#123456");
     expect((resolve(base, { foreground: null, background: null, cursor: null, ansi: Array(256).fill(null) }) as { foreground: string }).foreground)
       .toBe("#111111");
+    const changedBase = { ...base, foreground: "#222222", background: "#101010" };
+    expect(resolve(changedBase, overrides)).toMatchObject({ foreground: "#abcdef", background: "#101010" });
+    const empty = (runtime.emptyTerminalThemeOverrides as () => { ansi: Array<string | null> })();
+    expect(empty.ansi).toHaveLength(256);
+    expect(empty.ansi.every((value) => value === null)).toBe(true);
+    expect(() => resolve({ ...base, foreground: "#ABCDEF" }, empty)).toThrow(/lowercase #rrggbb/);
+    expect(() => resolve(base, { ...empty, ansi: [] })).toThrow(/256 entries/);
   });
   it("defines the deliver verbs of the native surface door", () => {
     expect(TERMINAL_SURFACE_DELIVER_VERBS).toEqual([
@@ -174,12 +182,18 @@ describe("terminal plugin contract 0.0.14", () => {
       mountedAtUnixMs: 1, firstVisibleFrameAtUnixMs: 2, firstFocusableInputAtUnixMs: 2,
       lastRenderedAtUnixMs: 3, lastFocusedAtUnixMs: 3, lastInputAtUnixMs: 4, lastPtyWriteAtUnixMs: 5,
       lastRenderDurationMs: 1, maxRenderDurationMs: 1, lastInputToPtyWriteMs: 1,
-      theme: {
+      themeMode: "dark",
+      baseTheme: {
         foreground: "#eeeeec", background: "#1e1e1e", cursor: "#ffffff",
-        cursorAccent: "#1e1e1e", selectionBackground: "#555753",
+        cursorAccent: "#1e1e1e", selectionBackground: "#555753", ansi: [...TERMINAL_ANSI_PALETTE],
+      },
+      terminalOverrides: { foreground: null, background: null, cursor: null, ansi: Array(256).fill(null) },
+      effectiveTheme: {
+        foreground: "#eeeeec", background: "#1e1e1e", cursor: "#ffffff",
+        cursorAccent: "#1e1e1e", selectionBackground: "#555753", ansi: [...TERMINAL_ANSI_PALETTE],
       },
     };
-    expect(status.theme.foreground).toBe("#eeeeec");
+    expect(status.effectiveTheme.foreground).toBe("#eeeeec");
     expect(status.drop.last?.accepted).toBe(1);
     expect(status.cursorAnimation).toEqual({ intervalMs: 750, phase: "on" });
   });
