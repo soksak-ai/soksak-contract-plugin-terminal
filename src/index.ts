@@ -292,6 +292,24 @@ export interface TerminalResizeStatus {
   rendered: TerminalRenderedObservation | null;
   operation: string;
 }
+export interface TerminalSelectionStatus {
+  active: boolean;
+  text: string;
+}
+export interface TerminalClipboardPermissionStatus {
+  read: boolean;
+  write: boolean;
+}
+export type TerminalDropMode = "path" | "inline";
+export interface TerminalDropResultStatus {
+  accepted: number;
+  refused: number;
+  mode: TerminalDropMode;
+}
+export interface TerminalDropStatus {
+  fileGrantState: "available" | "unavailable";
+  last: TerminalDropResultStatus | null;
+}
 export interface TerminalPresentationStatus {
   delivery: "bytes" | "frame" | "surface";
   mountSequence: number;
@@ -301,6 +319,10 @@ export interface TerminalPresentationStatus {
   acceptedInputSequence: number;
   ptyWriteSequence: number;
   focusedInput: boolean;
+  bracketedPaste: boolean;
+  selection: TerminalSelectionStatus;
+  clipboardPermission: TerminalClipboardPermissionStatus;
+  drop: TerminalDropStatus;
   cursorVisible: boolean;
   cursorActive: boolean;
   cursorRow: number | null;
