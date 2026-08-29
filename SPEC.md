@@ -1,6 +1,6 @@
 # Terminal plugin behavior contract
 
-Contract id: soksak-spec-plugin-terminal, version 0.0.18.
+Contract id: soksak-spec-plugin-terminal, version 0.0.19.
 
 This contract defines behavior shared by terminal plugins. It is not the generic plugin manifest
 format and it defines no terminal engine, renderer or provider selection.
