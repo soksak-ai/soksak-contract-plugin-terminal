@@ -1,6 +1,6 @@
 # 터미널 플러그인 동작 계약
 
-계약 ID는 `soksak-spec-plugin-terminal`, 버전은 `0.0.17`입니다.
+계약 ID는 `soksak-spec-plugin-terminal`, 버전은 `0.0.18`입니다.
 
 이 계약은 터미널 플러그인이 공통으로 제공하는 수명 주기, 명령, 상태, 노출 노드를
 정의합니다. 플러그인 매니페스트 형식, 터미널 엔진, 렌더러, 공급자 선택은 정의하지
@@ -22,10 +22,12 @@
 정수로 구성된 `<viewId>.<k>`입니다. 공통 명령은 `view`와 해당되는 경우 `pane`을 받습니다.
 `pane`이 우선하며 `view`는 그 view의 focus pane을 뜻합니다.
 
-`status`와 `recovery-status`는 `view`, `pane`, pane별 요약인 `panes`를 반환합니다.
+`status`와 `recovery-status`는 `view`, `pane`, pane별 `offset`, `historySize`, `followMode`를 포함한
+요약 `panes`를 반환합니다.
 `split`은 지정한 pane 옆에 새 pane을 열고 focus합니다. `pane.close`는 pane 하나를 닫으며
 마지막 pane은 host가 view와 함께 닫습니다. `scroll`은 행 수, 절대 offset 또는 edge로
-viewport를 history 안에서 이동하고 실제 적용한 offset을 반환합니다. `selection`은 선택한
+viewport를 history 안에서 이동하고 실제 offset, history size, `followMode`를 반환합니다. Offset 0은
+`follow`, 양수 offset은 `pinned`입니다. `selection`은 선택한
 화면 text를 반환합니다.
 
 `copy`는 host clipboard permission을 통해 선택 text를 기록합니다. `paste`는 자동화가 준 명시적

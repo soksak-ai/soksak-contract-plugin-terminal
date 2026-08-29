@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.17",
+  version: "0.0.18",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -156,7 +156,7 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
   },
   scroll: {
     danger: "none", input: paneInput({ lines: "number", offset: "number", edge: "string" }),
-    output: output({ pane: nullableString, offset: "number", historySize: "number" }, ["pane", "offset", "historySize"]),
+    output: output({ pane: nullableString, offset: "number", historySize: "number", followMode: "string" }, ["pane", "offset", "historySize", "followMode"]),
   },
   selection: {
     danger: "none", input: paneInput(),
@@ -424,6 +424,7 @@ export interface TerminalPaneSummary {
   rows: number;
   offset: number;
   historySize: number;
+  followMode: "follow" | "pinned";
   title: string | null;
   cwd: string | null;
 }

@@ -1,6 +1,6 @@
 # Terminal plugin behavior contract
 
-Contract id: soksak-spec-plugin-terminal, version 0.0.17.
+Contract id: soksak-spec-plugin-terminal, version 0.0.18.
 
 This contract defines behavior shared by terminal plugins. It is not the generic plugin manifest
 format and it defines no terminal engine, renderer or provider selection.
@@ -23,14 +23,15 @@ and, unless it addresses the whole view, `pane`. `pane` wins; `view` resolves to
 of that view; a command with neither resolves to the focused pane of the caller's view.
 
 `status` and `recovery-status` report `view`, `pane` and `panes`, one summary per pane
-(`pane`, `engineId`, `phase`, `cols`, `rows`, `offset`, `historySize`, `title`, `cwd`).
+(`pane`, `engineId`, `phase`, `cols`, `rows`, `offset`, `historySize`, `followMode`, `title`, `cwd`).
 `split` opens a new pane beside the addressed one and focuses it. `pane.close` closes one pane;
 the last pane of a view is not closed by the plugin, the host closes the view. `pane.focus` moves
 focus by key, by direction (`dir`) or by order (`cycle`). `pane.resize` moves the gutter at one
 side of a pane by pixels or by cells. `pane.equalize`, `pane.maximize`, `pane.broadcast` and
 `pane.title` act on the view or one pane and answer with the resulting state. `scroll` moves the
-viewport of one pane into history by lines, to an absolute offset, or to an edge; the answered
-offset is the one applied. `selection` returns the selected screen text of one pane.
+viewport of one pane into history by lines, to an absolute offset, or to an edge. The answer contains
+the applied offset, history size, and `followMode`: offset zero is `follow`, a positive offset is
+`pinned`. `selection` returns the selected screen text of one pane.
 `copy` writes that selected text through the host clipboard permission. `paste` accepts explicit
 text for automation or reads the granted host clipboard and passes it through bracketed-paste mode
 when the engine reports that mode. `drop` accepts host-issued file grants, never arbitrary paths;

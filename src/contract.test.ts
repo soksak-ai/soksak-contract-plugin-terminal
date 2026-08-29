@@ -10,10 +10,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.17", () => {
+describe("terminal plugin contract 0.0.18", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.17",
+      id: "soksak-spec-plugin-terminal", version: "0.0.18",
     });
   });
   it("defines every required lifecycle phase", () => {
@@ -125,7 +125,7 @@ describe("terminal plugin contract 0.0.17", () => {
       output: { required: ["emitted"] },
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["pane.title"].input.properties.title).toEqual(["string", "null"]);
-    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.scroll.output.required).toEqual(["pane", "offset", "historySize"]);
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.scroll.output.required).toEqual(["pane", "offset", "historySize", "followMode"]);
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["pane.list"].output.required).toEqual([
       "view", "focused", "maximized", "broadcast", "panes",
     ]);
