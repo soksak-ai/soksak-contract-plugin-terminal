@@ -84,7 +84,7 @@ describe("terminal plugin contract 0.0.15", () => {
   });
   it("defines the deliver verbs of the native surface door", () => {
     expect(TERMINAL_SURFACE_DELIVER_VERBS).toEqual([
-      "snapshot", "state", "read", "scroll", "selection", "focus", "input", "theme", "stop", "archive",
+      "snapshot", "state", "read", "scroll", "wheel", "selection", "focus", "input", "theme", "stop", "archive",
     ]);
   });
   it("defines one input and output schema for every common command", () => {
