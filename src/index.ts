@@ -4,7 +4,7 @@ export * from "./pane-key";
 
 export const TERMINAL_PLUGIN_CONTRACT = Object.freeze({
   id: "soksak-spec-plugin-terminal",
-  version: "0.0.15",
+  version: "0.0.16",
 } as const);
 
 const baseAnsiPalette = presentation.ansi.base;
@@ -273,7 +273,7 @@ export const TERMINAL_V1_COMPONENTS = Object.freeze([
 // Verbs the app's surface door accepts for one native terminal surface. `input` is an
 // injection like `send`; an unknown verb is refused by name, never mapped to a nearest one.
 export const TERMINAL_SURFACE_DELIVER_VERBS = Object.freeze([
-  "snapshot", "state", "read", "scroll", "selection", "focus", "input", "theme", "stop", "archive",
+  "snapshot", "state", "read", "scroll", "wheel", "selection", "focus", "input", "theme", "stop", "archive",
 ] as const);
 export type TerminalSurfaceDeliverVerb = (typeof TERMINAL_SURFACE_DELIVER_VERBS)[number];
 
