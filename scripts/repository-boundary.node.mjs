@@ -77,7 +77,7 @@ const copyWithOutdatedLockfile = () => {
   return copy;
 };
 
-test("Makefile packs and publishes with pnpm from command-line OUT and REGISTRY", () => {
+test("Makefile packages, attests, and publishes from command-line inputs", () => {
   assert.doesNotMatch(makefile, /\bnpm (pack|publish)\b/);
   assert.doesNotMatch(makefile, /PUBLISH_FLAGS/);
   assert.equal(
@@ -91,12 +91,13 @@ test("Makefile packs and publishes with pnpm from command-line OUT and REGISTRY"
   assert.match(makefile, /^prepare: guard preflight$/m);
   assert.match(makefile, /pnpm install --frozen-lockfile \$\(if \$\(findstring command line,\$\(origin REGISTRY\)\),\$\(registry_flags\)\)/);
   assert.match(makefile, /shasum -a 256 pnpm-workspace\.yaml/);
-  assert.match(makefile, /^release: require-out verify$/m);
-  assert.match(makefile, /pnpm pack --pack-destination "\$\(OUT\)"/);
-  assert.match(makefile, /shasum -a 256 "\$\(tarball\)"/);
-  assert.match(makefile, /gunzip -c "\$\(tarball\)" \| shasum -a 256/);
-  assert.match(makefile, /^publish: require-registry release$/m);
-  assert.match(makefile, /pnpm publish "\$\(tarball\)" \$\(publish_flags\)/);
+  assert.match(makefile, /^SDK_VERSION := 0\.0\.16$/m);
+  assert.match(makefile, /^release: require-tooling require-out verify$/m);
+  assert.match(makefile, /soksak-sdk package --root/);
+  assert.match(makefile, /^attest: require-tooling require-out release$/m);
+  assert.match(makefile, /soksak-sdk attest --release-dir/);
+  assert.match(makefile, /^publish: require-registry require-out attest$/m);
+  assert.match(makefile, /pnpm publish "\$\$archive" \$\(publish_flags\)/);
   refused(run(["release"]), /OUT/);
   refused(run(["release", "OUT=out"]), /OUT/);
   refused(run(["release", "OUT="]), /OUT/);
@@ -150,12 +151,13 @@ test("README documents the Makefile release commands verbatim", () => {
   const publish = `pnpm publish "<tarball>" ${makeVariable("publish_flags")}`;
   for (const name of ["README.md"]) {
     const readme = readFileSync(join(root, name), "utf8");
-    assert.ok(readme.includes("make release OUT=/absolute/dir"), name);
-    assert.ok(readme.includes("make publish OUT=/absolute/dir REGISTRY=http://host:port/"), name);
+    assert.ok(readme.includes("make release OUT=/absolute/dir COMMIT=<40-hex>"), name);
+    assert.ok(readme.includes("make attest OUT=/absolute/dir COMMIT=<40-hex>"), name);
+    assert.ok(readme.includes("make publish OUT=/absolute/dir COMMIT=<40-hex> REGISTRY=http://host:port/"), name);
     assert.ok(readme.includes(install), name);
-    assert.ok(readme.includes('pnpm pack --pack-destination "$(OUT)"'), name);
+    assert.ok(readme.includes("soksak-sdk package"), name);
+    assert.ok(readme.includes("soksak-sdk attest"), name);
     assert.ok(readme.includes(publish), name);
-    assert.ok(readme.includes('gunzip -c "<tarball>" | shasum -a 256'), name);
   }
 });
 

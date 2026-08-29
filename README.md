@@ -20,23 +20,24 @@ by name. GNU make's own environment channels (`MAKEFLAGS`, `GNUMAKEFLAGS`, `MAKE
 outside the Makefile's control and are not refused; setting them is a deliberate act of the caller.
 
 ```sh
-make release OUT=/absolute/dir
-make publish OUT=/absolute/dir REGISTRY=http://host:port/
+make release OUT=/absolute/dir COMMIT=<40-hex>
+make attest OUT=/absolute/dir COMMIT=<40-hex>
+make publish OUT=/absolute/dir COMMIT=<40-hex> REGISTRY=http://host:port/
 ```
 
-`release` runs `verify`, packs, and prints two digests:
+`release` runs `verify` and delegates the complete portable release to the selected SDK:
 
 ```sh
-pnpm pack --pack-destination "$(OUT)"
-shasum -a 256 "<tarball>"
-gunzip -c "<tarball>" | shasum -a 256
+soksak-sdk package --root "$(CURDIR)" --spec-root "<prepared-spec>" --commit "$(COMMIT)" --out "$(OUT)"
 ```
 
-gzip bytes differ between zlib builds, so reproducibility of a tarball is judged on the digest of
-the decompressed tar stream. The tarball digest identifies the exact file uploaded. The tarball
-bytes in the registry are the release identity for consumers.
+`attest` adds the exact SDK, Spec, platform, architecture, Node, and pnpm receipt:
 
-`publish` runs `release`, then uploads that exact tarball:
+```sh
+soksak-sdk attest --release-dir "$(OUT)" --spec-root "<prepared-spec>" --tooling-release "<sdk-release>" --mode native --platform "<platform>" --architecture "<architecture>" --tool "node=<version>" --tool "pnpm=<version>"
+```
+
+`publish` runs `attest`, then uploads the release tarball:
 
 ```sh
 pnpm publish "<tarball>" --registry "$(REGISTRY)" --@soksak:registry="$(REGISTRY)" --@soksak-ai:registry="$(REGISTRY)" --no-git-checks
