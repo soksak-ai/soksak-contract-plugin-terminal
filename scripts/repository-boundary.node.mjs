@@ -39,7 +39,7 @@ test("repository owns public metadata", () => {
 
 test("package publishes by name and version", () => {
   const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-  assert.equal("private" in pkg, false);
+  assert.equal(pkg.private, false);
   assert.equal("publishConfig" in pkg, false);
   assert.deepEqual(pkg.files, ["src", "!src/*.test.ts", "contract.json", "presentation.json", "LICENSE", "README*", "SPEC*"]);
   assert.deepEqual(pkg.exports, { ".": "./src/index.ts" });
@@ -91,7 +91,7 @@ test("Makefile packages, attests, and publishes from command-line inputs", () =>
   assert.match(makefile, /^prepare: guard preflight$/m);
   assert.match(makefile, /pnpm install --frozen-lockfile \$\(if \$\(findstring command line,\$\(origin REGISTRY\)\),\$\(registry_flags\)\)/);
   assert.match(makefile, /shasum -a 256 pnpm-workspace\.yaml/);
-  assert.match(makefile, /^SDK_VERSION := 0\.0\.16$/m);
+  assert.match(makefile, /^SDK_VERSION := 0\.0\.18$/m);
   assert.match(makefile, /^release: require-tooling require-out verify$/m);
   assert.match(makefile, /soksak-sdk package --root/);
   assert.match(makefile, /^attest: require-tooling require-out release$/m);
