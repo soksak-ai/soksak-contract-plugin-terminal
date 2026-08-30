@@ -91,7 +91,7 @@ test("Makefile packages, attests, and publishes from command-line inputs", () =>
   assert.match(makefile, /^prepare: guard preflight$/m);
   assert.match(makefile, /pnpm install --frozen-lockfile \$\(if \$\(findstring command line,\$\(origin REGISTRY\)\),\$\(registry_flags\)\)/);
   assert.match(makefile, /shasum -a 256 pnpm-workspace\.yaml/);
-  assert.match(makefile, /^SDK_VERSION := 0\.0\.18$/m);
+  assert.match(makefile, /^SDK_VERSION := 0\.0\.19$/m);
   assert.match(makefile, /^release: require-tooling require-out verify$/m);
   assert.match(makefile, /soksak-sdk package --root/);
   assert.match(makefile, /^attest: require-tooling require-out release$/m);
