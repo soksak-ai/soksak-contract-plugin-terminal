@@ -142,6 +142,13 @@ describe("terminal plugin contract 0.0.20", () => {
     });
   });
 
+  it("names monotonic input admission and PTY write wait predicates", () => {
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).toMatchObject({
+      acceptedInputSequenceGreaterThan: "number",
+      ptyWriteSequenceGreaterThan: "number",
+    });
+  });
+
   it("names event-driven viewport and history wait predicates", () => {
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).toMatchObject({
       historySize: "number",
