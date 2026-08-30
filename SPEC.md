@@ -91,8 +91,10 @@ interval. `themeMode` matches the presented host mode and `effectiveBackground` 
 `presentation.effectiveTheme.background`, after host theme delivery or an OSC override/reset has
 reached the renderer. `historySize` is exact, `minHistorySize` is inclusive, `offset` is exact, and
 `followMode` is `follow|pinned`; the result returns the matching history size, offset and follow
-mode. Screen text arriving first does not satisfy one of these state predicates. `idleMs` adds one
-more condition: no output arrived for that long.
+mode. `acceptedInputSequenceGreaterThan` and `ptyWriteSequenceGreaterThan` compare the two monotonic
+presentation coordinates strictly, so admission and the later PTY write can be awaited as separate
+events. Screen text arriving first does not satisfy one of these state predicates. `idleMs` adds
+one more condition: no output arrived for that long.
 Size waits may require exact columns, columns below a boundary, or columns above a boundary. All
 three resolve from the current rendered state or its size-change event, never by interval sampling.
 

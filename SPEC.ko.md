@@ -87,7 +87,10 @@ host palette이며, `terminalOverrides`는 nullable OSC 10/11/12 색과 정확�
 `presentation.effectiveTheme.background`를 비교합니다. `historySize`는 정확값,
 `minHistorySize`는 이상값, `offset`은 정확값, `followMode`는 `follow|pinned`이며 결과는 충족한
 history size, offset, follow mode를 반환합니다. 화면 text가 먼저 도착해도 이 상태 predicate를
-대신 충족하지 않습니다. `idleMs`는 해당 시간 동안 출력이 없다는 조건을 추가합니다.
+대신 충족하지 않습니다. `acceptedInputSequenceGreaterThan`과
+`ptyWriteSequenceGreaterThan`은 두 단조 증가 presentation 좌표를 엄격한 초과로 비교하므로 input
+admission과 뒤이은 PTY write를 서로 다른 event로 기다릴 수 있습니다. `idleMs`는 해당 시간 동안
+출력이 없다는 조건을 추가합니다.
 크기 대기는 정확한 열 수, 경계보다 작은 열 수, 경계보다 큰 열 수를 요구할 수 있습니다.
 세 조건 모두 현재 렌더 상태 또는 크기 변경 사건으로 끝나며 주기적으로 조회하지 않습니다.
 
