@@ -46,7 +46,7 @@ export const TERMINAL_PLUGIN_COMMANDS = Object.freeze([
   "status", "wait", "archive", "send", "read", "clear", "focus", "recovery-status",
   "split", "pane.close", "pane.focus", "pane.list", "pane.resize", "pane.equalize",
   "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "copy", "paste",
-  "drop", "input.compose",
+  "drop", "image.present", "input.compose",
 ] as const);
 export type TerminalPluginCommand = (typeof TERMINAL_PLUGIN_COMMANDS)[number];
 
@@ -178,8 +178,17 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
     output: output({ pane: nullableString, pasted: "boolean", sent: "number" }, ["pane", "pasted", "sent"]),
   },
   drop: {
-    danger: "inject", input: paneInput({ grants: "array", mode: "string" }, ["grants"]),
-    output: output({ pane: nullableString, accepted: "number", mode: "string" }, ["pane", "accepted", "mode"]),
+    danger: "inject", input: paneInput({ grants: "array" }, ["grants"]),
+    output: output({
+      pane: nullableString, accepted: "number", refused: "number", mode: "string",
+    }, ["pane", "accepted", "refused", "mode"]),
+  },
+  "image.present": {
+    danger: "none", input: paneInput({ resource: "object", protocol: "string" }, ["resource"]),
+    output: output({
+      pane: nullableString, resourceId: "string", presented: "boolean",
+      protocol: ["string", "null"], refusal: ["object", "null"],
+    }, ["pane", "resourceId", "presented", "protocol", "refusal"]),
   },
   "input.compose": {
     danger: "inject", input: paneInput({ updates: "array", data: "string" }, ["updates", "data"]),
@@ -270,8 +279,8 @@ export const TERMINAL_V1_COMPONENTS = Object.freeze([
   }),
   component({
     id: "inline-images", level: "capability",
-    commands: ["status"],
-    status: ["inlineImageProtocols", "inlineImageLimits"],
+    commands: ["image.present", "status"],
+    status: ["inlineImageProtocols", "inlineImageLimits", "inlineImageRefusal"],
     events: ["image.presented", "image.refused"],
     nodes: ["terminal-screen"],
   }),
@@ -307,7 +316,9 @@ export interface TerminalClipboardPermissionStatus {
   read: boolean;
   write: boolean;
 }
-export type TerminalDropMode = "path" | "inline";
+// A host-issued file grant authorizes path insertion only. Inline presentation consumes an
+// opaque TerminalImageResource through image.present and never borrows this command.
+export type TerminalDropMode = "path";
 export interface TerminalDropResultStatus {
   accepted: number;
   refused: number;
@@ -316,6 +327,218 @@ export interface TerminalDropResultStatus {
 export interface TerminalDropStatus {
   fileGrantState: "available" | "unavailable";
   last: TerminalDropResultStatus | null;
+}
+export const TERMINAL_INLINE_IMAGE_PROTOCOLS = Object.freeze([
+  "kitty-graphics", "iterm2-inline", "sixel",
+] as const);
+export type TerminalInlineImageProtocol = (typeof TERMINAL_INLINE_IMAGE_PROTOCOLS)[number];
+export const TERMINAL_INLINE_IMAGE_REFUSAL_CODES = Object.freeze([
+  "unsupported-engine", "unsupported-protocol", "unsupported-mime", "resource-expired",
+  "resource-too-large", "resource-unavailable", "presentation-failed",
+] as const);
+export type TerminalInlineImageRefusalCode = (typeof TERMINAL_INLINE_IMAGE_REFUSAL_CODES)[number];
+export const TERMINAL_INLINE_IMAGE_EVENTS = Object.freeze({
+  presented: "image.presented", refused: "image.refused",
+} as const);
+
+export interface TerminalImageResourceLifetime {
+  kind: "single-presentation";
+  expiresAtUnixMs: number;
+}
+export interface TerminalImageResource {
+  resourceId: string;
+  mime: string;
+  sizeBytes: number;
+  lifetime: TerminalImageResourceLifetime;
+}
+export interface TerminalInlineImageLimits {
+  maxBytes: number;
+  supportedMimeTypes: readonly string[];
+}
+export interface TerminalInlineImageRefusal {
+  code: TerminalInlineImageRefusalCode;
+  message: string;
+}
+export interface TerminalInlineImageStatus {
+  inlineImageProtocols: readonly TerminalInlineImageProtocol[];
+  inlineImageLimits: TerminalInlineImageLimits;
+  inlineImageRefusal: TerminalInlineImageRefusal | null;
+}
+export interface TerminalImagePresentResult {
+  pane: string | null;
+  resourceId: string;
+  presented: boolean;
+  protocol: TerminalInlineImageProtocol | null;
+  refusal: TerminalInlineImageRefusal | null;
+}
+export interface TerminalImagePresentedEvent {
+  pane: string;
+  resourceId: string;
+  protocol: TerminalInlineImageProtocol;
+  mime: string;
+  sizeBytes: number;
+}
+export interface TerminalImageRefusedEvent {
+  pane: string | null;
+  resourceId: string;
+  refusal: TerminalInlineImageRefusal;
+}
+
+const terminalResourceId = /^[a-z0-9][a-z0-9._-]{0,127}$/;
+const terminalImageMime = /^image\/[a-z0-9][a-z0-9.+-]{0,63}$/;
+const ownRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+const checkClosed = (
+  value: Record<string, unknown>, allowed: readonly string[], required: readonly string[],
+  label: string, errors: string[],
+) => {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) errors.push(`${label}.${key}: unknown field`);
+  }
+  for (const key of required) {
+    if (!(key in value)) errors.push(`${label}.${key}: required`);
+  }
+};
+const checkResourceId = (value: unknown, label: string, errors: string[]) => {
+  if (typeof value !== "string" || !terminalResourceId.test(value)) {
+    errors.push(`${label}: opaque resource id required`);
+  }
+};
+const checkImageMime = (value: unknown, label: string, errors: string[]) => {
+  if (typeof value !== "string" || !terminalImageMime.test(value)) {
+    errors.push(`${label}: image MIME required`);
+  }
+};
+const checkPositiveInteger = (value: unknown, label: string, errors: string[]) => {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+    errors.push(`${label}: positive integer required`);
+  }
+};
+const checkNonNegativeInteger = (value: unknown, label: string, errors: string[]) => {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
+    errors.push(`${label}: non-negative integer required`);
+  }
+};
+const checkRefusal = (value: unknown, label: string, errors: string[]) => {
+  const refusal = ownRecord(value);
+  if (!refusal) {
+    errors.push(`${label}: refusal object required`);
+    return;
+  }
+  checkClosed(refusal, ["code", "message"], ["code", "message"], label, errors);
+  if (!TERMINAL_INLINE_IMAGE_REFUSAL_CODES.includes(refusal.code as TerminalInlineImageRefusalCode)) {
+    errors.push(`${label}.code: unknown refusal`);
+  }
+  if (typeof refusal.message !== "string" || refusal.message === "") {
+    errors.push(`${label}.message: non-empty message required`);
+  }
+};
+
+export function validateTerminalImageResource(value: unknown): string[] {
+  const errors: string[] = [];
+  const resource = ownRecord(value);
+  if (!resource) return ["resource: object required"];
+  checkClosed(
+    resource, ["resourceId", "mime", "sizeBytes", "lifetime"],
+    ["resourceId", "mime", "sizeBytes", "lifetime"], "resource", errors,
+  );
+  if ("resourceId" in resource) checkResourceId(resource.resourceId, "resource.resourceId", errors);
+  if ("mime" in resource) checkImageMime(resource.mime, "resource.mime", errors);
+  if ("sizeBytes" in resource) checkPositiveInteger(resource.sizeBytes, "resource.sizeBytes", errors);
+  if ("lifetime" in resource) {
+    const lifetime = ownRecord(resource.lifetime);
+    if (!lifetime) errors.push("resource.lifetime: object required");
+    else {
+      checkClosed(lifetime, ["kind", "expiresAtUnixMs"], ["kind", "expiresAtUnixMs"], "resource.lifetime", errors);
+      if (lifetime.kind !== "single-presentation") {
+        errors.push("resource.lifetime.kind: single-presentation required");
+      }
+      if ("expiresAtUnixMs" in lifetime) {
+        checkPositiveInteger(lifetime.expiresAtUnixMs, "resource.lifetime.expiresAtUnixMs", errors);
+      }
+    }
+  }
+  return errors;
+}
+
+export function validateTerminalInlineImageStatus(value: unknown): string[] {
+  const errors: string[] = [];
+  const status = ownRecord(value);
+  if (!status) return ["inline image status: object required"];
+  checkClosed(
+    status, ["inlineImageProtocols", "inlineImageLimits", "inlineImageRefusal"],
+    ["inlineImageProtocols", "inlineImageLimits", "inlineImageRefusal"], "inline image status", errors,
+  );
+  const protocols = status.inlineImageProtocols;
+  if (!Array.isArray(protocols)) errors.push("inlineImageProtocols: array required");
+  else {
+    protocols.forEach((protocol, index) => {
+      if (!TERMINAL_INLINE_IMAGE_PROTOCOLS.includes(protocol as TerminalInlineImageProtocol)) {
+        errors.push(`inlineImageProtocols[${index}]: unknown protocol`);
+      }
+    });
+    if (new Set(protocols).size !== protocols.length) {
+      errors.push("inlineImageProtocols: duplicates forbidden");
+    }
+  }
+  const limits = ownRecord(status.inlineImageLimits);
+  if (!limits) errors.push("inlineImageLimits: object required");
+  else {
+    checkClosed(
+      limits, ["maxBytes", "supportedMimeTypes"], ["maxBytes", "supportedMimeTypes"],
+      "inlineImageLimits", errors,
+    );
+    if ("maxBytes" in limits) checkNonNegativeInteger(limits.maxBytes, "inlineImageLimits.maxBytes", errors);
+    const mimes = limits.supportedMimeTypes;
+    if (!Array.isArray(mimes)) errors.push("inlineImageLimits.supportedMimeTypes: array required");
+    else {
+      mimes.forEach((mime, index) => checkImageMime(mime, `inlineImageLimits.supportedMimeTypes[${index}]`, errors));
+      if (new Set(mimes).size !== mimes.length) errors.push("inlineImageLimits.supportedMimeTypes: duplicates forbidden");
+    }
+  }
+  if (status.inlineImageRefusal !== null && status.inlineImageRefusal !== undefined) {
+    checkRefusal(status.inlineImageRefusal, "inlineImageRefusal", errors);
+  }
+  if (Array.isArray(protocols) && limits && typeof limits.maxBytes === "number") {
+    if (protocols.length === 0 && limits.maxBytes !== 0) {
+      errors.push("inlineImageLimits.maxBytes: unsupported engine limit must be zero");
+    }
+    if (protocols.length > 0 && limits.maxBytes <= 0) {
+      errors.push("inlineImageLimits.maxBytes: supported protocol limit must be positive");
+    }
+  }
+  return errors;
+}
+
+export function validateTerminalImagePresentResult(value: unknown): string[] {
+  const errors: string[] = [];
+  const result = ownRecord(value);
+  if (!result) return ["result: object required"];
+  checkClosed(
+    result, ["pane", "resourceId", "presented", "protocol", "refusal"],
+    ["pane", "resourceId", "presented", "protocol", "refusal"], "result", errors,
+  );
+  if (result.pane !== null && typeof result.pane !== "string") errors.push("result.pane: string or null required");
+  if ("resourceId" in result) checkResourceId(result.resourceId, "result.resourceId", errors);
+  if (typeof result.presented !== "boolean") errors.push("result.presented: boolean required");
+  const protocol = result.protocol;
+  if (protocol !== null && !TERMINAL_INLINE_IMAGE_PROTOCOLS.includes(protocol as TerminalInlineImageProtocol)) {
+    errors.push("result.protocol: unknown protocol");
+  }
+  if (result.presented === true) {
+    if (!TERMINAL_INLINE_IMAGE_PROTOCOLS.includes(protocol as TerminalInlineImageProtocol)) {
+      errors.push("result.protocol: supported protocol required when presented");
+    }
+    if (result.refusal !== null) errors.push("result.refusal: must be null when presented");
+  } else if (result.presented === false) {
+    if (protocol !== null) errors.push("result.protocol: must be null when refused");
+    if (result.refusal === null || result.refusal === undefined) {
+      errors.push("result.refusal: explicit refusal required when not presented");
+    } else checkRefusal(result.refusal, "result.refusal", errors);
+  }
+  return errors;
 }
 export type TerminalCursorShape = "block" | "underline" | "bar";
 export interface TerminalCursorAnimationStatus {
@@ -405,6 +628,9 @@ export interface TerminalPresentationStatus extends TerminalThemeStatus {
   selection: TerminalSelectionStatus;
   clipboardPermission: TerminalClipboardPermissionStatus;
   drop: TerminalDropStatus;
+  inlineImageProtocols: readonly TerminalInlineImageProtocol[];
+  inlineImageLimits: TerminalInlineImageLimits;
+  inlineImageRefusal: TerminalInlineImageRefusal | null;
   cursorVisible: boolean;
   cursorActive: boolean;
   cursorShape: TerminalCursorShape;
