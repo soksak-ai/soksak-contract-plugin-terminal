@@ -338,7 +338,7 @@ export const TERMINAL_INLINE_IMAGE_REFUSAL_CODES = Object.freeze([
 ] as const);
 export type TerminalInlineImageRefusalCode = (typeof TERMINAL_INLINE_IMAGE_REFUSAL_CODES)[number];
 export const TERMINAL_INLINE_IMAGE_EVENTS = Object.freeze({
-  presented: "image.presented", refused: "image.refused",
+  presented: "soksak:terminal-image-presented", refused: "soksak:terminal-image-refused",
 } as const);
 
 export interface TerminalImageResourceLifetime {
@@ -351,11 +351,15 @@ export interface TerminalImageResource {
   sizeBytes: number;
   lifetime: TerminalImageResourceLifetime;
 }
-export interface TerminalInlineImageLimits {
+export interface TerminalInlineImageProtocolLimits {
   maxBytes: number;
   supportedMimeTypes: readonly string[];
 }
+export type TerminalInlineImageLimits = Readonly<Partial<
+  Record<TerminalInlineImageProtocol, TerminalInlineImageProtocolLimits>
+>>;
 export interface TerminalInlineImageRefusal {
+  resourceId: string;
   code: TerminalInlineImageRefusalCode;
   message: string;
 }
@@ -416,18 +420,14 @@ const checkPositiveInteger = (value: unknown, label: string, errors: string[]) =
     errors.push(`${label}: positive integer required`);
   }
 };
-const checkNonNegativeInteger = (value: unknown, label: string, errors: string[]) => {
-  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    errors.push(`${label}: non-negative integer required`);
-  }
-};
 const checkRefusal = (value: unknown, label: string, errors: string[]) => {
   const refusal = ownRecord(value);
   if (!refusal) {
     errors.push(`${label}: refusal object required`);
     return;
   }
-  checkClosed(refusal, ["code", "message"], ["code", "message"], label, errors);
+  checkClosed(refusal, ["resourceId", "code", "message"], ["resourceId", "code", "message"], label, errors);
+  if ("resourceId" in refusal) checkResourceId(refusal.resourceId, `${label}.resourceId`, errors);
   if (!TERMINAL_INLINE_IMAGE_REFUSAL_CODES.includes(refusal.code as TerminalInlineImageRefusalCode)) {
     errors.push(`${label}.code: unknown refusal`);
   }
@@ -486,28 +486,49 @@ export function validateTerminalInlineImageStatus(value: unknown): string[] {
   const limits = ownRecord(status.inlineImageLimits);
   if (!limits) errors.push("inlineImageLimits: object required");
   else {
-    checkClosed(
-      limits, ["maxBytes", "supportedMimeTypes"], ["maxBytes", "supportedMimeTypes"],
-      "inlineImageLimits", errors,
-    );
-    if ("maxBytes" in limits) checkNonNegativeInteger(limits.maxBytes, "inlineImageLimits.maxBytes", errors);
-    const mimes = limits.supportedMimeTypes;
-    if (!Array.isArray(mimes)) errors.push("inlineImageLimits.supportedMimeTypes: array required");
-    else {
-      mimes.forEach((mime, index) => checkImageMime(mime, `inlineImageLimits.supportedMimeTypes[${index}]`, errors));
-      if (new Set(mimes).size !== mimes.length) errors.push("inlineImageLimits.supportedMimeTypes: duplicates forbidden");
+    for (const [protocol, rawLimit] of Object.entries(limits)) {
+      if (!TERMINAL_INLINE_IMAGE_PROTOCOLS.includes(protocol as TerminalInlineImageProtocol)) {
+        errors.push(`inlineImageLimits.${protocol}: unknown protocol`);
+        continue;
+      }
+      if (!Array.isArray(protocols) || !protocols.includes(protocol)) {
+        errors.push(`inlineImageLimits.${protocol}: limit declared for unsupported protocol`);
+      }
+      const limit = ownRecord(rawLimit);
+      if (!limit) {
+        errors.push(`inlineImageLimits.${protocol}: object required`);
+        continue;
+      }
+      checkClosed(
+        limit, ["maxBytes", "supportedMimeTypes"], ["maxBytes", "supportedMimeTypes"],
+        `inlineImageLimits.${protocol}`, errors,
+      );
+      if ("maxBytes" in limit) {
+        checkPositiveInteger(limit.maxBytes, `inlineImageLimits.${protocol}.maxBytes`, errors);
+      }
+      const mimes = limit.supportedMimeTypes;
+      if (!Array.isArray(mimes) || mimes.length === 0) {
+        errors.push(`inlineImageLimits.${protocol}.supportedMimeTypes: non-empty array required`);
+      } else {
+        mimes.forEach((mime, index) => {
+          checkImageMime(mime, `inlineImageLimits.${protocol}.supportedMimeTypes[${index}]`, errors);
+        });
+        if (new Set(mimes).size !== mimes.length) {
+          errors.push(`inlineImageLimits.${protocol}.supportedMimeTypes: duplicates forbidden`);
+        }
+      }
+    }
+    if (Array.isArray(protocols)) {
+      for (const protocol of protocols) {
+        if (TERMINAL_INLINE_IMAGE_PROTOCOLS.includes(protocol as TerminalInlineImageProtocol)
+          && !(protocol in limits)) {
+          errors.push(`inlineImageLimits.${protocol}: required for supported protocol`);
+        }
+      }
     }
   }
   if (status.inlineImageRefusal !== null && status.inlineImageRefusal !== undefined) {
     checkRefusal(status.inlineImageRefusal, "inlineImageRefusal", errors);
-  }
-  if (Array.isArray(protocols) && limits && typeof limits.maxBytes === "number") {
-    if (protocols.length === 0 && limits.maxBytes !== 0) {
-      errors.push("inlineImageLimits.maxBytes: unsupported engine limit must be zero");
-    }
-    if (protocols.length > 0 && limits.maxBytes <= 0) {
-      errors.push("inlineImageLimits.maxBytes: supported protocol limit must be positive");
-    }
   }
   return errors;
 }
@@ -536,7 +557,13 @@ export function validateTerminalImagePresentResult(value: unknown): string[] {
     if (protocol !== null) errors.push("result.protocol: must be null when refused");
     if (result.refusal === null || result.refusal === undefined) {
       errors.push("result.refusal: explicit refusal required when not presented");
-    } else checkRefusal(result.refusal, "result.refusal", errors);
+    } else {
+      checkRefusal(result.refusal, "result.refusal", errors);
+      const refusal = ownRecord(result.refusal);
+      if (refusal && refusal.resourceId !== result.resourceId) {
+        errors.push("result.refusal.resourceId: must match result.resourceId");
+      }
+    }
   }
   return errors;
 }
