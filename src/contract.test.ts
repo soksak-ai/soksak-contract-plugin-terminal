@@ -22,11 +22,11 @@ describe("terminal plugin contract 0.0.21", () => {
     expect(TERMINAL_PLUGIN_PHASES).toContain("degraded-tail");
   });
   it("defines the common command and node surfaces", () => {
-    expect(new Set(TERMINAL_PLUGIN_COMMANDS).size).toBe(23);
+    expect(new Set(TERMINAL_PLUGIN_COMMANDS).size).toBe(24);
     expect(TERMINAL_PLUGIN_COMMANDS).toEqual(expect.arrayContaining([
       "wait", "split", "pane.close", "pane.focus", "pane.list", "pane.resize", "pane.equalize",
       "pane.maximize", "pane.broadcast", "pane.title", "scroll", "selection", "input.compose",
-      "copy", "paste", "drop",
+      "copy", "paste", "drop", "image.present",
     ]));
     expect(new Set(TERMINAL_PLUGIN_NODES).size).toBe(7);
     expect(TERMINAL_PLUGIN_NODES).toContain("pane");
@@ -129,6 +129,16 @@ describe("terminal plugin contract 0.0.21", () => {
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["input.compose"]).toMatchObject({
       danger: "inject", input: { required: ["updates", "data"], properties: { updates: "array" } },
       output: { required: ["emitted"] },
+    });
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.drop).toMatchObject({
+      input: { required: ["grants"] },
+      output: { required: ["pane", "accepted", "refused", "mode"] },
+    });
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.drop.input.properties).not.toHaveProperty("mode");
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["image.present"]).toMatchObject({
+      danger: "none",
+      input: { required: ["resource"] },
+      output: { required: ["pane", "resourceId", "presented", "protocol", "refusal"] },
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS["pane.title"].input.properties.title).toEqual(["string", "null"]);
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.scroll.output.required).toEqual(["pane", "offset", "historySize", "followMode"]);
