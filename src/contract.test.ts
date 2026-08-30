@@ -131,6 +131,30 @@ describe("terminal plugin contract 0.0.19", () => {
     ]);
   });
 
+  it("names event-driven theme presentation wait predicates", () => {
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).toMatchObject({
+      themeMode: "string",
+      effectiveBackground: "string",
+    });
+  });
+
+  it("names event-driven viewport and history wait predicates", () => {
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).toMatchObject({
+      historySize: "number",
+      minHistorySize: "number",
+      offset: "number",
+      followMode: "string",
+    });
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.properties).toMatchObject({
+      historySize: "number",
+      offset: "number",
+      followMode: "string",
+    });
+    expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.required).toEqual(expect.arrayContaining([
+      "historySize", "offset", "followMode",
+    ]));
+  });
+
   it("defines the canonical ANSI palette shared by every renderer", () => {
     expect(TERMINAL_ANSI_PALETTE).toHaveLength(256);
     expect(TERMINAL_ANSI_PALETTE.slice(0, 16)).toEqual([
