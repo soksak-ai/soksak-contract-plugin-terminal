@@ -96,7 +96,10 @@ describe("terminal plugin contract 0.0.19", () => {
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait).toMatchObject({
       input: { required: ["phase"] },
-      output: { required: ["phase", "recoveryOutcome", "fidelity", "presentation", "pane"] },
+      output: { required: [
+        "phase", "recoveryOutcome", "fidelity", "presentation", "pane",
+        "historySize", "offset", "followMode",
+      ] },
     });
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.required).toEqual(expect.arrayContaining([
       "hostPixels", "requested", "pty", "recovery", "rendered", "operation", "presentation",
@@ -105,7 +108,8 @@ describe("terminal plugin contract 0.0.19", () => {
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.properties.panes).toBe("array");
     expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
       "cols", "colsGreaterThan", "colsLessThan", "contains", "cursorActive", "cursorVisible",
-      "focusedInput", "idleMs", "pane", "phase", "rows", "timeoutMs", "view",
+      "effectiveBackground", "focusedInput", "followMode", "historySize", "idleMs",
+      "minHistorySize", "offset", "pane", "phase", "rows", "themeMode", "timeoutMs", "view",
     ]);
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.required).toContain("presentation");
     const viewOnly = new Set(["pane.list", "pane.equalize", "pane.broadcast"]);

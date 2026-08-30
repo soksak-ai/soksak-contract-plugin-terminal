@@ -93,11 +93,17 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
       phase: "string", timeoutMs: "number", contains: "string",
       cols: "number", colsLessThan: "number", colsGreaterThan: "number", rows: "number",
       focusedInput: "boolean", cursorVisible: "boolean", cursorActive: "boolean", idleMs: "number",
+      themeMode: "string", effectiveBackground: "string",
+      historySize: "number", minHistorySize: "number", offset: "number", followMode: "string",
     }, ["phase"]),
     output: output({
       phase: "string", recoveryOutcome: "string", fidelity: "string", failure: ["object", "null"],
       cols: "number", rows: "number", operation: "string", presentation: "object", pane: nullableString,
-    }, ["phase", "recoveryOutcome", "fidelity", "presentation", "pane"]),
+      historySize: "number", offset: "number", followMode: "string",
+    }, [
+      "phase", "recoveryOutcome", "fidelity", "presentation", "pane",
+      "historySize", "offset", "followMode",
+    ]),
   },
   archive: {
     danger: "none", input: paneInput(),
