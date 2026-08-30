@@ -23,7 +23,8 @@ test("repository owns public metadata", () => {
   assert.equal(pkg.version, contract.version);
   assert.deepEqual(JSON.parse(readFileSync(join(root, "release-files.json"), "utf8")), [
     "LICENSE", "README.md", "SPEC.ko.md", "SPEC.md", "contract.json", "package.json", "pnpm-lock.yaml",
-    "presentation.json", "src/contract.test.ts", "src/index.ts", "src/pane-key.ts", "src/presentation-artifact.test.ts", "tsconfig.json",
+    "presentation.json", "src/contract.test.ts", "src/index.ts", "src/inline-image-contract.test.ts",
+    "src/pane-key.ts", "src/presentation-artifact.test.ts", "tsconfig.json",
   ]);
   const workflow = readFileSync(join(root, ".github/workflows/release.yml"), "utf8");
   assert.match(pkg.engines.node, /^\d+\.\d+\.\d+$/);

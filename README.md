@@ -3,6 +3,16 @@ The public DOM nodes are `terminal-root`, `terminal-screen`, `terminal-input`,
 (`terminal-screen/2`, `pane/2`, `gutter/2/right`). A consumer addresses those declared nodes and
 commands; it does not read a renderer implementation, private selector, or sibling repository.
 
+## Inline image foundation
+
+File and image drop remains authorized path insertion through `drop`. Inline presentation is the
+separate capability command `image.present`: it accepts an opaque, single-presentation image
+resource identity with explicit MIME, decoded byte size, and expiry, never a private path or copied
+base64 payload. Status publishes the selected engine sidecar's declared protocols, protocol-specific
+limits, and last structured refusal. Presented and refused outcomes carry the resource id and emit
+one observable event. Engines without a declared native resource verb expose no protocols and
+refuse explicitly; the contract does not treat an engine name or optional callback as support.
+
 ## Verification
 
 The package has no `@soksak` dependency, so `REGISTRY` is optional on every `make` invocation.

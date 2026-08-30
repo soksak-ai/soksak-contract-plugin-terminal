@@ -32,16 +32,35 @@ viewport를 history 안에서 이동하고 실제 offset, history size, `followM
 
 `copy`는 host clipboard permission을 통해 선택 text를 기록합니다. `paste`는 자동화가 준 명시적
 text 또는 grant된 host clipboard를 읽고 engine이 bracketed-paste mode를 보고하면 그 mode를
-따릅니다. `drop`은 임의 path가 아니라 host가 발급한 file grant를 받습니다. Path mode는 안전하게
-quote한 path를 PTY에 쓰고 inline mode는 engine이 요청 image protocol capability를 선언한 경우만
-수락합니다.
+따릅니다. `drop`은 임의 path가 아니라 host가 발급한 file grant를 받고 안전하게 quote한 path를
+PTY에 씁니다. Image file grant도 같은 path 입력이며 inline 표시 권한이 아닙니다.
 
 File grant는 대상 Plugin과 window에 host가 묶은 불투명한 빈 값이 아닌 문자열입니다. Host의 file-grant
 capability만 redeem할 수 있습니다. Redeem 결과는 grant가 허용한 raw `path`를 반환합니다. Terminal Kit이 그 path를 quote하여
 선언된 pane login shell의 입력 문법을 만들며 Core는 shell 종류나 command 문법을 소유하지 않습니다.
 Plugin은 command가 전달한 raw path를 받지 않습니다. 알 수 없거나 만료됐거나 다른 소유자의
-grant는 거부합니다. Inline mode는 presenter가 선언한 protocol의 redeem된 inline payload만 소비하고
-path mode로 fallback하지 않습니다.
+grant는 거부합니다.
+
+`image.present`는 별도 capability 명령입니다. 이 명령은 승인된 불투명 resource descriptor
+`{resourceId,mime,sizeBytes,lifetime:{kind:"single-presentation",expiresAtUnixMs}}`와 선택적 protocol
+요청을 받습니다. Descriptor에는 raw path나 복사한 image data가 없습니다. Host는 `resourceId`를
+Plugin과 window에 묶고 command address가 시도 대상 pane을 정합니다. `sizeBytes`는 encoded transport
+길이가 아니라 host가 확인한 decoded byte 길이입니다. Lease는 최초 완료된 표시 시도(성공 또는
+거부)나 `expiresAtUnixMs` 중 먼저 도달한 때 끝나며 같은 id로 재시도할 수 없습니다.
+
+선택된 engine sidecar가 protocol 사실을 소유합니다. Sidecar는 `inlineImageProtocols`, protocol별
+`inlineImageLimits {maxBytes,supportedMimeTypes}`, `inlineImageRefusal`을 보고하고 Plugin과 Kit은 이를
+검증·투영할 뿐입니다. 닫힌 protocol 이름은 `kitty-graphics`, `iterm2-inline`, `sixel`입니다. Core는
+일반 resource 승인·byte 전달·release만 소유하며 terminal image protocol을 알지 않습니다. Renderer는
+불투명 resource identity와 승인된 resource stream만 받고 private source path를 받지 않습니다.
+
+`presented:true`는 queue 등록이 아니라 renderer 또는 engine의 표시 ACK입니다. 완료된 각 시도는
+연결된 `resourceId`와 protocol 또는 구조화된 refusal 중 하나를 반환하고 정확히 한 번
+`soksak:terminal-image-presented` 또는 `soksak:terminal-image-refused` event를 발송합니다. Refusal code는
+`unsupported-engine`, `unsupported-protocol`, `unsupported-mime`, `resource-expired`,
+`resource-too-large`, `resource-unavailable`, `presentation-failed`입니다. Native image 표시가 없는
+engine은 protocol을 하나도 보고하지 않고 `image.present`를 `unsupported-engine`으로 거부하며 path
+입력, PTY write, 비슷한 이름의 protocol fallback을 하지 않습니다.
 
 `read`는 지정한 pane의 현재 viewport를 반환하며 `lines`는 마지막 N개 viewport 행으로
 응답을 제한합니다. history를 읽으려면 `scroll` 뒤에 `read`를 호출하며 renderer cache 보유 상태는 응답을 바꾸지 않습니다.
@@ -64,8 +83,10 @@ PTY와 복원 관측은 원본 이벤트 순서와 절대 출력 순서를 포�
 
 Presentation status는 `bracketedPaste`, selection `{active,text}`, clipboard permission
 `{read,write}`, drop `{fileGrantState,last}`도 보고합니다. `last`는 drop 전에는 null이고 이후에는
-accepted/refused 수와 정확한 `path|inline` mode를 기록합니다. DOM proxy node는 같은 상태를 공개하고
-selection, clipboard, drop accepted/refused event를 발송합니다.
+accepted/refused 수와 `path` mode를 기록합니다. Inline 표시 상태는 `inlineImageProtocols`, protocol별
+`inlineImageLimits`, 연결된 resource id를 담는 nullable `inlineImageRefusal`의 세 필드입니다. DOM proxy
+node는 같은 상태를 공개하고 selection, clipboard, drop, terminal-image presented/refused event를
+발송합니다.
 Cursor status는 adapter parsing이 아니라 engine state입니다. `cursorShape`은
 `block|underline|bar`, `cursorBlinking`은 DECSCUSR/engine 결과, `cursorVisible`은 engine의 ?25 상태이며
 `cursorAnimation {intervalMs,phase}`는 renderer policy와 현재 `steady|on|off` phase를 보고합니다.
@@ -137,11 +158,13 @@ Terminal v1 구현은 다음의 일반적인 터미널 기능을 쓸 수 있는 
 | cursor | engine shape/blink/visibility, user default와 animation policy, focus 표시 | engine state + renderer policy; adapter CSI parser 금지 |
 | theme | dark/light base 변경, OSC 4/10/11/12 override/reset, effective theme 상태 | host base + engine override + 공통 renderer |
 | performance | bounded history/cache, row damage, ring reuse, input/write/paint latency와 zero-gap 근거 | 각 owner가 자기 경계, 설치 제품이 composition 검증 |
-| inline image | 선택된 engine이 실제 구현한 Kitty graphics, iTerm2 OSC 1337 또는 Sixel capability | 선택 capability; 가짜 fallback 금지 |
+| inline image | 불투명 승인 resource, protocol별 limit, renderer ACK, 구조화된 거부와 연결 event | 선택 engine capability; protocol 사실은 sidecar 소유 |
 
 `inline image` 위의 기본 component는 필수입니다. Inline image protocol은 capability로 구분합니다.
 구현하지 않은 parser를 private하게 일부 만들지 않고 unavailable을 보고합니다. Inline 표시를 하지
-않아도 file/image drop의 path 입력은 동작합니다.
+않아도 file/image drop의 path 입력은 동작합니다. Protocol 이름, engine 이름, optional presenter
+callback은 capability 근거가 아닙니다. Sidecar가 native resource verb와 protocol limit을 선언하기
+전까지 `image.present`는 `unsupported-engine`으로 거부합니다.
 
 ### TUI에서 host로 pane 제어
 

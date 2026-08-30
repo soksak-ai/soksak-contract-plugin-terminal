@@ -35,15 +35,38 @@ the applied offset, history size, and `followMode`: offset zero is `follow`, a p
 `copy` writes that selected text through the host clipboard permission. `paste` accepts explicit
 text for automation or reads the granted host clipboard and passes it through bracketed-paste mode
 when the engine reports that mode. `drop` accepts host-issued file grants, never arbitrary paths;
-path mode writes safely quoted paths to the PTY and inline mode is accepted only when the engine
-declares the requested image protocol.
+it writes safely quoted paths to the PTY. An image file grant uses the same path-insertion command;
+it does not authorize inline presentation.
 
 A file grant is an opaque non-empty string bound by the host to the addressed Plugin and window.
 Only the host file-grant capability can redeem it. Redemption returns the raw `path` authorized by
 that grant. Terminal Kit quotes that path for the declared pane login shell; Core owns neither shell
-families nor command syntax. The Plugin never accepts a command-supplied raw path.
-An unknown, expired or differently owned grant is refused. Inline mode consumes only a redeemed
-inline payload whose protocol the presenter declares and never falls back to path mode.
+families nor command syntax. The Plugin never accepts a command-supplied raw path. An unknown,
+expired or differently owned grant is refused.
+
+`image.present` is a separate capability command. It accepts an authorized opaque resource
+descriptor `{resourceId,mime,sizeBytes,lifetime:{kind:"single-presentation",expiresAtUnixMs}}` and
+an optional requested protocol. The descriptor contains neither a raw path nor copied image data.
+The host binds `resourceId` to the Plugin and window; the command address binds the attempt to one
+pane. `sizeBytes` is the decoded byte length attested by the host, not encoded transport length.
+The lease ends on the first completed presentation attempt—presented or refused—or at
+`expiresAtUnixMs`, whichever happens first. A resource cannot be retried under the same id.
+
+The selected engine sidecar owns protocol truth. It reports `inlineImageProtocols`, per-protocol
+`inlineImageLimits {maxBytes,supportedMimeTypes}`, and `inlineImageRefusal`; the Plugin and Kit only
+validate and project those facts. The closed protocol names are `kitty-graphics`, `iterm2-inline`
+and `sixel`. Core owns generic resource authorization, byte delivery and release, but knows no
+terminal image protocol. A renderer receives the opaque resource identity and authorized resource
+stream, never the private source path.
+
+`presented:true` means the renderer or engine acknowledged presentation, not that work was merely
+queued. Every completed attempt returns the correlated `resourceId` and exactly one of a protocol
+or a structured refusal, then publishes exactly one `soksak:terminal-image-presented` or
+`soksak:terminal-image-refused` event. Refusal codes are `unsupported-engine`,
+`unsupported-protocol`, `unsupported-mime`, `resource-expired`, `resource-too-large`,
+`resource-unavailable`, and `presentation-failed`. An engine with no native image presentation
+reports no protocols and refuses `image.present` as `unsupported-engine`; it never inserts the path,
+writes the PTY, or selects a similarly named protocol as fallback.
 `read` returns the addressed pane's current viewport; `lines` limits the answer to the last N
 viewport rows. Reading history requires `scroll` followed by `read`, and renderer cache retention
 never changes the answer.
@@ -69,8 +92,10 @@ that boundary completed is invalid.
 columns or rows are not part of status; the five boundary fields are the only resize evidence.
 Presentation status also reports `bracketedPaste`, selection `{active,text}`, clipboard permission
 `{read,write}`, and drop `{fileGrantState,last}`. `last` is null before a drop and otherwise records
-accepted/refused counts and the exact `path|inline` mode. DOM proxy nodes publish the same state and
-dispatch selection, clipboard and drop accepted/refused events.
+accepted/refused counts and the `path` mode. Inline presentation status is three explicit fields:
+`inlineImageProtocols`, protocol-keyed `inlineImageLimits`, and nullable `inlineImageRefusal` with
+the correlated resource id. DOM proxy nodes publish the same state and dispatch selection,
+clipboard, drop, and terminal-image presented/refused events.
 Cursor status is engine state, not adapter parsing: `cursorShape` is `block|underline|bar`,
 `cursorBlinking` is the DECSCUSR/engine result, `cursorVisible` is the engine's ?25 state, and
 `cursorAnimation {intervalMs,phase}` reports the renderer policy and current `steady|on|off` phase.
@@ -143,11 +168,13 @@ usable defaults and exposes only settings a real user can choose:
 | cursor | engine shape/blink/visibility, user default and animation policy, focus presentation | engine state + renderer policy, never an adapter CSI parser |
 | theme | dark/light base changes, OSC 4/10/11/12 overrides and resets, effective theme status | host base + engine overrides + shared renderer |
 | performance | bounded history/cache, row damage, ring reuse, input/write/paint latency and zero-gap evidence | each owner tests its boundary; installed product tests composition |
-| inline images | declared Kitty graphics, iTerm2 OSC 1337 or Sixel capability when the selected engine actually implements it | optional engine capability; no fake fallback |
+| inline images | opaque authorized resource, protocol-keyed limits, renderer acknowledgement, structured refusal and correlated events | optional engine capability; engine sidecar owns protocol truth |
 
 Basic components above `inline images` are required. Inline image protocols are capability-gated:
 an implementation that does not parse one reports it unavailable instead of adding a private
-partial parser. File/image drop still works as path input without inline display.
+partial parser. File/image drop still works as path input without inline display. A protocol name,
+engine name, or optional presenter callback is not capability evidence; until the sidecar declares
+the native resource verb and protocol limit, `image.present` refuses as `unsupported-engine`.
 
 ### TUI-to-host pane control
 
