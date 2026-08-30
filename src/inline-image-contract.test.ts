@@ -58,23 +58,36 @@ describe("inline image contract foundation", () => {
     ]);
     expect(validateTerminalInlineImageStatus({
       inlineImageProtocols: ["kitty-graphics"],
-      inlineImageLimits: { maxBytes: 8_388_608, supportedMimeTypes: ["image/png"] },
+      inlineImageLimits: {
+        "kitty-graphics": { maxBytes: 8_388_608, supportedMimeTypes: ["image/png"] },
+      },
       inlineImageRefusal: null,
     })).toEqual([]);
     expect(validateTerminalInlineImageStatus({
-      inlineImageProtocols: [], inlineImageLimits: { maxBytes: 0, supportedMimeTypes: [] },
-      inlineImageRefusal: { code: "unsupported-engine", message: "engine declares no inline image protocol" },
+      inlineImageProtocols: [], inlineImageLimits: {},
+      inlineImageRefusal: {
+        resourceId: "image.resource-1", code: "unsupported-engine",
+        message: "engine declares no inline image protocol",
+      },
     })).toEqual([]);
     expect(validateTerminalInlineImageStatus({
       inlineImageProtocols: ["private-protocol"],
-      inlineImageLimits: { maxBytes: 1, supportedMimeTypes: ["image/png"] },
+      inlineImageLimits: {},
       inlineImageRefusal: null,
     })).toContain("inlineImageProtocols[0]: unknown protocol");
+    expect(validateTerminalInlineImageStatus({
+      inlineImageProtocols: ["kitty-graphics"],
+      inlineImageLimits: { sixel: { maxBytes: 1, supportedMimeTypes: ["image/png"] } },
+      inlineImageRefusal: null,
+    })).toEqual(expect.arrayContaining([
+      "inlineImageLimits.kitty-graphics: required for supported protocol",
+      "inlineImageLimits.sixel: limit declared for unsupported protocol",
+    ]));
   });
 
   it("makes presented and refused outcomes observable without a path", () => {
     expect(TERMINAL_INLINE_IMAGE_EVENTS).toEqual({
-      presented: "image.presented", refused: "image.refused",
+      presented: "soksak:terminal-image-presented", refused: "soksak:terminal-image-refused",
     });
     expect(validateTerminalImagePresentResult({
       pane: "tab-a.1", resourceId: resource.resourceId, presented: true,
@@ -82,11 +95,15 @@ describe("inline image contract foundation", () => {
     })).toEqual([]);
     expect(validateTerminalImagePresentResult({
       pane: "tab-a.1", resourceId: resource.resourceId, presented: false, protocol: null,
-      refusal: { code: "unsupported-engine", message: "engine declares no inline image protocol" },
+      refusal: {
+        resourceId: resource.resourceId, code: "unsupported-engine",
+        message: "engine declares no inline image protocol",
+      },
     })).toEqual([]);
     expect(validateTerminalImagePresentResult({
       pane: "tab-a.1", resourceId: resource.resourceId, presented: false, protocol: null,
-      refusal: { code: "unsupported-engine", message: "refused" }, path: "/private/image.png",
+      refusal: { resourceId: resource.resourceId, code: "unsupported-engine", message: "refused" },
+      path: "/private/image.png",
     })).toContain("result.path: unknown field");
   });
 
@@ -97,7 +114,8 @@ describe("inline image contract foundation", () => {
     })).toContain("result.refusal: explicit refusal required when not presented");
     expect(validateTerminalImagePresentResult({
       pane: "tab-a.1", resourceId: resource.resourceId, presented: true,
-      protocol: null, refusal: { code: "unsupported-engine", message: "contradiction" },
+      protocol: null,
+      refusal: { resourceId: resource.resourceId, code: "unsupported-engine", message: "contradiction" },
     })).toEqual(expect.arrayContaining([
       "result.protocol: supported protocol required when presented",
       "result.refusal: must be null when presented",

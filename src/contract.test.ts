@@ -225,7 +225,7 @@ describe("terminal plugin contract 0.0.21", () => {
         last: { accepted: 1, refused: 0, mode: "path" },
       },
       inlineImageProtocols: [],
-      inlineImageLimits: { maxBytes: 0, supportedMimeTypes: [] },
+      inlineImageLimits: {},
       inlineImageRefusal: null,
       cursorVisible: true, cursorActive: true, cursorShape: "bar", cursorBlinking: true,
       cursorAnimation: { intervalMs: 750, phase: "on" }, cursorRow: 0, cursorColumn: 0,
