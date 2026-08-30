@@ -80,9 +80,14 @@ host palette이며, `terminalOverrides`는 nullable OSC 10/11/12 색과 정확�
 
 `TERMINAL_PLUGIN_COMMAND_SCHEMAS`는 공통 명령의 닫힌 입력·출력 객체를 정의합니다.
 플러그인은 자체 명령을 추가할 수 있지만 공통 명령을 제거하거나 위험 수준을 변경하거나
-선언되지 않은 필드를 받거나 필수 출력을 약화할 수 없습니다. `wait`는 상태 변경을
-구독하며 요청 단계 또는 명시된 제한 시간에 끝납니다. 주기적으로 상태를 조회하지
-않습니다.
+선언되지 않은 필드를 받거나 필수 출력을 약화할 수 없습니다. `wait`는 status publication을
+구독하며 요청 단계와 선언한 모든 predicate가 충족되거나 명시된 제한 시간이 지나야 끝납니다.
+주기적으로 상태를 조회하지 않습니다. `themeMode`는 renderer에 도달한 host mode를,
+`effectiveBackground`는 host theme 전달 또는 OSC override/reset 이후의
+`presentation.effectiveTheme.background`를 비교합니다. `historySize`는 정확값,
+`minHistorySize`는 이상값, `offset`은 정확값, `followMode`는 `follow|pinned`이며 결과는 충족한
+history size, offset, follow mode를 반환합니다. 화면 text가 먼저 도착해도 이 상태 predicate를
+대신 충족하지 않습니다. `idleMs`는 해당 시간 동안 출력이 없다는 조건을 추가합니다.
 크기 대기는 정확한 열 수, 경계보다 작은 열 수, 경계보다 큰 열 수를 요구할 수 있습니다.
 세 조건 모두 현재 렌더 상태 또는 크기 변경 사건으로 끝나며 주기적으로 조회하지 않습니다.
 

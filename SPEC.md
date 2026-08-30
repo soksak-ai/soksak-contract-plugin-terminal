@@ -85,9 +85,14 @@ status fields. Adapters do not parse OSC or run a second theme state machine.
 `TERMINAL_PLUGIN_COMMAND_SCHEMAS` defines the closed input and output object for each common
 command. A plugin may add commands in its own namespace, but it cannot remove a common command,
 change its danger level, accept undeclared fields or weaken its required output.
-`wait` subscribes to lifecycle changes and returns when the requested phase is reached or its
-declared timeout expires. It does not sample status on an interval. `idleMs` adds one more
-condition: no output arrived for that long.
+`wait` subscribes to status publication and returns only when the requested phase and every
+declared predicate hold, or when its declared timeout expires. It does not sample status on an
+interval. `themeMode` matches the presented host mode and `effectiveBackground` matches
+`presentation.effectiveTheme.background`, after host theme delivery or an OSC override/reset has
+reached the renderer. `historySize` is exact, `minHistorySize` is inclusive, `offset` is exact, and
+`followMode` is `follow|pinned`; the result returns the matching history size, offset and follow
+mode. Screen text arriving first does not satisfy one of these state predicates. `idleMs` adds one
+more condition: no output arrived for that long.
 Size waits may require exact columns, columns below a boundary, or columns above a boundary. All
 three resolve from the current rendered state or its size-change event, never by interval sampling.
 
