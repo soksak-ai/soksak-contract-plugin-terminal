@@ -93,6 +93,7 @@ export const TERMINAL_PLUGIN_COMMAND_SCHEMAS = Object.freeze({
       phase: "string", timeoutMs: "number", contains: "string",
       cols: "number", colsLessThan: "number", colsGreaterThan: "number", rows: "number",
       focusedInput: "boolean", cursorVisible: "boolean", cursorActive: "boolean", idleMs: "number",
+      acceptedInputSequenceGreaterThan: "number", ptyWriteSequenceGreaterThan: "number",
       themeMode: "string", effectiveBackground: "string",
       historySize: "number", minHistorySize: "number", offset: "number", followMode: "string",
     }, ["phase"]),

@@ -107,9 +107,11 @@ describe("terminal plugin contract 0.0.20", () => {
     ]));
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.status.output.properties.panes).toBe("array");
     expect(Object.keys(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.input.properties).sort()).toEqual([
-      "cols", "colsGreaterThan", "colsLessThan", "contains", "cursorActive", "cursorVisible",
+      "acceptedInputSequenceGreaterThan", "cols", "colsGreaterThan", "colsLessThan", "contains",
+      "cursorActive", "cursorVisible",
       "effectiveBackground", "focusedInput", "followMode", "historySize", "idleMs",
-      "minHistorySize", "offset", "pane", "phase", "rows", "themeMode", "timeoutMs", "view",
+      "minHistorySize", "offset", "pane", "phase", "ptyWriteSequenceGreaterThan", "rows",
+      "themeMode", "timeoutMs", "view",
     ]);
     expect(TERMINAL_PLUGIN_COMMAND_SCHEMAS.wait.output.required).toContain("presentation");
     const viewOnly = new Set(["pane.list", "pane.equalize", "pane.broadcast"]);
