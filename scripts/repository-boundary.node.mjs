@@ -131,7 +131,7 @@ test("Makefile accepts REGISTRY optionally because the package has no @soksak de
     assert.notEqual(result.status, 0);
     assert.match(result.stdout, /BUILD_ENVIRONMENT_READY/);
     assert.match(result.stdout + result.stderr, /ERR_PNPM_OUTDATED_LOCKFILE/);
-    assert.match(result.stderr, /^make: \*\*\* \[prepare\] Error 1$/m);
+    assert.match(result.stderr, /^make: \*\*\* \[(?:Makefile:\d+: )?prepare\] Error 1$/m);
     assert.doesNotMatch(result.stderr, /Error 65/);
     assert.doesNotMatch(result.stderr, /REGISTRY/);
     assert.doesNotMatch(result.stdout + result.stderr, /rewrote pnpm-workspace\.yaml/);
@@ -148,7 +148,7 @@ test("prepare exits with the pnpm install status and no workspace message when t
     assert.notEqual(result.status, 0);
     assert.match(result.stdout, /BUILD_ENVIRONMENT_READY/);
     assert.match(result.stdout + result.stderr, /ERR_PNPM_OUTDATED_LOCKFILE/);
-    assert.match(result.stderr, /^make: \*\*\* \[prepare\] Error 1$/m);
+    assert.match(result.stderr, /^make: \*\*\* \[(?:Makefile:\d+: )?prepare\] Error 1$/m);
     assert.doesNotMatch(result.stderr, /Error 65/);
     assert.doesNotMatch(result.stdout + result.stderr, /rewrote pnpm-workspace\.yaml/);
   } finally {
