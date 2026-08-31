@@ -17,6 +17,7 @@ test("contract owner builds a sealed candidate from the exact spec artifact", ()
     "git -C source rev-parse HEAD",
     "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
     "verify-candidate-artifact.mjs",
+    "soksak-soksak-spec-*.tgz",
     "working-directory: source",
     "make verify",
     "build-portable-release.mjs",
@@ -33,5 +34,6 @@ test("contract owner builds a sealed candidate from the exact spec artifact", ()
     "gh release",
     "gh api",
     "github.workflow_ref",
+    "soksak-ai-plugin-spec-*.tgz",
   ]) assert.doesNotMatch(workflow, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });

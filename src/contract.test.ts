@@ -10,10 +10,10 @@ import {
   validateTerminalPluginManifestCommands,
 } from "./index";
 
-describe("terminal plugin contract 0.0.21", () => {
+describe("terminal plugin contract 0.0.22", () => {
   it("publishes one exact contract identity", () => {
     expect(TERMINAL_PLUGIN_CONTRACT).toEqual({
-      id: "soksak-spec-plugin-terminal", version: "0.0.21",
+      id: "soksak-spec-plugin-terminal", version: "0.0.22",
     });
   });
   it("defines every required lifecycle phase", () => {

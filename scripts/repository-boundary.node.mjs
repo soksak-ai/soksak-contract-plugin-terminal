@@ -21,6 +21,7 @@ test("repository owns public metadata", () => {
   const contract = JSON.parse(readFileSync(join(root, "contract.json"), "utf8"));
   assert.deepEqual(contract, { id: "soksak-contract-plugin-terminal", version: pkg.version });
   assert.equal(pkg.version, contract.version);
+  assert.equal(pkg.version, "0.0.22");
   assert.deepEqual(JSON.parse(readFileSync(join(root, "release-files.json"), "utf8")), [
     "LICENSE", "README.md", "SPEC.ko.md", "SPEC.md", "contract.json", "package.json", "pnpm-lock.yaml",
     "presentation.json", "src/contract.test.ts", "src/index.ts", "src/inline-image-contract.test.ts",
@@ -31,8 +32,17 @@ test("repository owns public metadata", () => {
   assert.match(pkg.packageManager, /^pnpm@\d+\.\d+\.\d+$/);
   assert.equal(readFileSync(join(root, ".node-version"), "utf8").trim(), pkg.engines.node);
   assert.doesNotMatch(workflow, /repository: soksak-ai\/soksak-spec/);
-  assert.match(workflow, /inputs\.spec_url|inputs\.spec_sha256/);
-  assert.match(workflow, /make verify/);
+  for (const input of ["sdk_archive_url", "sdk_archive_sha256", "sdk_release_url", "sdk_release_sha256"]) {
+    assert.match(workflow, new RegExp(`${input}:`));
+    assert.match(workflow, new RegExp(`inputs\\.${input}`));
+  }
+  assert.doesNotMatch(workflow, /spec_url:|spec_sha256:|soksak-ai-plugin-spec/);
+  assert.match(workflow, /cp "\$RUNNER_TEMP\/soksak-sdk-release[.]json" "\$RUNNER_TEMP\/soksak-sdk\/release[.]json"/);
+  assert.match(workflow, /soksak-sdk["']? prepare/);
+  assert.match(workflow, /make attest/);
+  assert.match(workflow, /OUT=/);
+  assert.match(workflow, /COMMIT=/);
+  assert.match(workflow, /[.]dependencies\/soksak-spec\/release-template\/publish-canonical-release[.]mjs/);
   assert.match(workflow, /node-version-file: component\/[.]node-version/);
   assert.match(workflow, /package_json_file: component\/package\.json/);
   assert.match(workflow, /immutable-releases.*enforced_by_owner/);
@@ -92,7 +102,7 @@ test("Makefile packages, attests, and publishes from command-line inputs", () =>
   assert.match(makefile, /^prepare: guard preflight$/m);
   assert.match(makefile, /pnpm install --frozen-lockfile \$\(if \$\(findstring command line,\$\(origin REGISTRY\)\),\$\(registry_flags\)\)/);
   assert.match(makefile, /shasum -a 256 pnpm-workspace\.yaml/);
-  assert.match(makefile, /^SDK_VERSION := 0\.0\.19$/m);
+  assert.match(makefile, /^SDK_VERSION := 0\.0\.20$/m);
   assert.match(makefile, /^release: require-tooling require-out verify$/m);
   assert.match(makefile, /soksak-sdk package --root/);
   assert.match(makefile, /^attest: require-tooling require-out release$/m);

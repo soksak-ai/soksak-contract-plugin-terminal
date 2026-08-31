@@ -100,7 +100,7 @@ jobs:
           test "$(sha256sum spec-candidate/candidate-artifact.json | awk '{print $1}')" = "$MANIFEST_SHA256"
           test "$(jq -r .source.commit spec-candidate/candidate-artifact.json)" = "$SOURCE_COMMIT"
           test "$(jq -r .component.id spec-candidate/candidate-artifact.json)" = "soksak-spec"
-          set -- spec-candidate/soksak-ai-plugin-spec-*.tgz
+          set -- spec-candidate/soksak-soksak-spec-*.tgz
           test "$#" -eq 1
           mkdir spec-package
           tar -xzf "$1" -C spec-package --strip-components=1
